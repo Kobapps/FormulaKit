@@ -1,21 +1,16 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using FormulaKit.Runtime;
 using UnityEditor;
-using UnityEditor.UIElements;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 namespace FormulaKit.Editor.Tools.Tools
 {
     public class FormulaBuilderWindow : EditorWindow
     {
-        private const string LayoutPath = "Assets/FormulaKit/Editor/Tools/FormulaBuilderWindow.uxml";
-        private const string StylePath = "Assets/FormulaKit/Editor/Tools/FormulaBuilderWindow.uss";
         private const string ExamplesAssetPath = "Assets/FormulaKit/Editor/Tools/FormulaExamples.txt";
 
         private readonly Dictionary<string, float> _testInputs = new Dictionary<string, float>();
@@ -28,31 +23,18 @@ namespace FormulaKit.Editor.Tools.Tools
         private string _formulaExpression = string.Empty;
         private bool _advancedMode = true;
 
+        private Vector2 _inputsScroll;
+        private float _evaluationResult;
+        private string _statusMessage = string.Empty;
+        private MessageType _statusType = MessageType.None;
         private string _examplesError;
 
-        private TextField _idField;
-        private TextField _basicExpression;
-        private CodeEditorElement _codeEditor;
-        private Toggle _advancedToggle;
-        private VisualElement _editorHost;
-        private Button _examplesButton;
-        private Button _functionsButton;
-        private Button _helpButton;
-        private Button _autoDetectButton;
-        private ScrollView _inputsContainer;
-        private Button _addInputButton;
-        private Button _clearInputsButton;
-        private Button _randomInputsButton;
-        private Button _evaluateButton;
-        private Label _resultLabel;
-        private HelpBox _statusBox;
+        private CodeEditor _codeEditor;
 
-        private readonly List<InputRow> _inputRows = new List<InputRow>();
-
-        private static readonly Regex NumberRegex = new Regex(@"\\b\\d+(\\.\\d+)?\\b", RegexOptions.Compiled);
-        private static readonly Regex KeywordRegex = new Regex(@"\\b(let|if|else|elseif|return|true|false)\\b", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private static readonly Regex FunctionRegex = new Regex(@"\\b(abs|acos|asin|atan|ceil|clamp|clamp01|cos|exp|floor|lerp|log|max|min|negative|pow|rand|randf|random|round|sign|sin|sqrt|tan)\\b", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private static readonly Regex OperatorRegex = new Regex(@"[\\+\\-\\*/=<>!&\\|\\^]+", RegexOptions.Compiled);
+        private static readonly Regex NumberRegex = new Regex(@"\b\d+(\.\d+)?\b", RegexOptions.Compiled);
+        private static readonly Regex KeywordRegex = new Regex(@"\b(let|if|else|elseif|return|true|false)\b", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex FunctionRegex = new Regex(@"\b(abs|acos|asin|atan|ceil|clamp|clamp01|cos|exp|floor|lerp|log|max|min|negative|pow|rand|randf|random|round|sign|sin|sqrt|tan)\b", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex OperatorRegex = new Regex(@"[\+\-\*/=<>!&\|\^]+", RegexOptions.Compiled);
 
         private static readonly FunctionSnippet[] FunctionSnippets =
         {
@@ -60,33 +42,33 @@ namespace FormulaKit.Editor.Tools.Tools
             new FunctionSnippet("acos", "acos(value)", "Arc cosine in radians."),
             new FunctionSnippet("asin", "asin(value)", "Arc sine in radians."),
             new FunctionSnippet("atan", "atan(value)", "Arc tangent in radians."),
-            new FunctionSnippet("ceil", "ceil(value)", "Rounds value up to the nearest integer."),
-            new FunctionSnippet("clamp", "clamp(value, min, max)", "Clamps value between min and max."),
-            new FunctionSnippet("clamp01", "clamp01(value)", "Clamps value between 0 and 1."),
-            new FunctionSnippet("cos", "cos(radians)", "Cosine of the angle in radians."),
+            new FunctionSnippet("ceil", "ceil(value)", "Rounds value up."),
+            new FunctionSnippet("clamp", "clamp(value, min, max)", "Clamp between min and max."),
+            new FunctionSnippet("clamp01", "clamp01(value)", "Clamp between 0 and 1."),
+            new FunctionSnippet("cos", "cos(radians)", "Cosine of the angle."),
             new FunctionSnippet("exp", "exp(power)", "Euler's number raised to power."),
-            new FunctionSnippet("floor", "floor(value)", "Rounds value down to the nearest integer."),
-            new FunctionSnippet("lerp", "lerp(a, b, t)", "Linearly interpolates between a and b."),
+            new FunctionSnippet("floor", "floor(value)", "Rounds value down."),
+            new FunctionSnippet("lerp", "lerp(a, b, t)", "Linearly interpolates."),
             new FunctionSnippet("log", "log(value)", "Natural logarithm."),
-            new FunctionSnippet("max", "max(a, b)", "Maximum of a and b."),
-            new FunctionSnippet("min", "min(a, b)", "Minimum of a and b."),
+            new FunctionSnippet("max", "max(a, b)", "Maximum of two values."),
+            new FunctionSnippet("min", "min(a, b)", "Minimum of two values."),
             new FunctionSnippet("negative", "negative(value)", "Negates the value."),
-            new FunctionSnippet("pow", "pow(value, power)", "Raises value to power."),
-            new FunctionSnippet("rand", "rand(maxExclusive)", "Random integer below max."),
+            new FunctionSnippet("pow", "pow(value, power)", "Raises value to a power."),
+            new FunctionSnippet("rand", "rand(maxExclusive)", "Random integer."),
             new FunctionSnippet("randf", "randf(maxExclusive)", "Random float below max."),
             new FunctionSnippet("random", "random()", "Random float between 0 and 1."),
-            new FunctionSnippet("round", "round(value)", "Rounds to the nearest integer."),
-            new FunctionSnippet("sign", "sign(value)", "Returns the sign of the value."),
-            new FunctionSnippet("sin", "sin(radians)", "Sine of the angle in radians."),
+            new FunctionSnippet("round", "round(value)", "Rounds to nearest integer."),
+            new FunctionSnippet("sign", "sign(value)", "Returns the sign."),
+            new FunctionSnippet("sin", "sin(radians)", "Sine of the angle."),
             new FunctionSnippet("sqrt", "sqrt(value)", "Square root of value."),
-            new FunctionSnippet("tan", "tan(radians)", "Tangent of the angle in radians."),
+            new FunctionSnippet("tan", "tan(radians)", "Tangent of the angle."),
         };
 
         [MenuItem("Tools/Formula Framework/Formula Builder")]
         public static void ShowWindow()
         {
             var window = GetWindow<FormulaBuilderWindow>("Formula Builder");
-            window.minSize = new Vector2(520, 640);
+            window.minSize = new Vector2(520f, 640f);
             window.Show();
         }
 
@@ -94,449 +76,362 @@ namespace FormulaKit.Editor.Tools.Tools
         {
             _tempLoader = new FormulaLoader();
             _tempRunner = new FormulaRunner(_tempLoader);
+            _codeEditor = new CodeEditor("FormulaBuilder.AdvancedEditor")
+            {
+                Text = _formulaExpression,
+                Highlighter = HighlightFormula
+            };
+            _codeEditor.TextChanged += OnAdvancedTextChanged;
             LoadExamples();
         }
 
         private void OnDisable()
         {
+            if (_codeEditor != null)
+            {
+                _codeEditor.TextChanged -= OnAdvancedTextChanged;
+            }
+
             _tempLoader = null;
             _tempRunner = null;
         }
 
-        public void CreateGUI()
+        private void OnGUI()
         {
-            rootVisualElement.Clear();
-
-            var visualTree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(LayoutPath);
-            if (visualTree == null)
+            if (_codeEditor == null)
             {
-                rootVisualElement.Add(new Label("Missing layout asset"));
-                return;
-            }
-
-            VisualElement layout = visualTree.CloneTree();
-            rootVisualElement.Add(layout);
-
-            var style = AssetDatabase.LoadAssetAtPath<StyleSheet>(StylePath);
-            if (style != null)
-            {
-                rootVisualElement.styleSheets.Add(style);
-            }
-
-            CacheElements(layout);
-            SetupBindings();
-            RefreshEditorMode();
-            RefreshInputsUI();
-            UpdateStatus();
-        }
-
-        private void CacheElements(VisualElement root)
-        {
-            _idField = root.Q<TextField>("formula-id");
-            _basicExpression = root.Q<TextField>("basic-expression");
-            _editorHost = root.Q<VisualElement>("editor-host");
-            _advancedToggle = root.Q<Toggle>("advanced-toggle");
-            _examplesButton = root.Q<Button>("examples-button");
-            _functionsButton = root.Q<Button>("functions-button");
-            _helpButton = root.Q<Button>("help-button");
-            _autoDetectButton = root.Q<Button>("auto-detect-button");
-            _inputsContainer = root.Q<ScrollView>("inputs-container");
-            _addInputButton = root.Q<Button>("add-input-button");
-            _clearInputsButton = root.Q<Button>("clear-inputs-button");
-            _randomInputsButton = root.Q<Button>("random-inputs-button");
-            _evaluateButton = root.Q<Button>("evaluate-button");
-            _resultLabel = root.Q<Label>("result-label");
-            _statusBox = root.Q<HelpBox>("status-box");
-
-            _codeEditor = new CodeEditorElement();
-            _codeEditor.name = "advanced-expression";
-            _codeEditor.SetHighlighter(HighlightFormula);
-            _codeEditor.TextChanged += OnAdvancedExpressionChanged;
-            _editorHost.Add(_codeEditor);
-        }
-
-        private void SetupBindings()
-        {
-            _idField?.RegisterValueChangedCallback(evt =>
-            {
-                _formulaId = evt.newValue ?? string.Empty;
-            });
-
-            if (_basicExpression != null)
-            {
-                _basicExpression.multiline = true;
-                _basicExpression.label = "Expression";
-                _basicExpression.RegisterValueChangedCallback(evt =>
+                _codeEditor = new CodeEditor("FormulaBuilder.AdvancedEditor")
                 {
-                    if (!_advancedMode)
-                    {
-                        _formulaExpression = evt.newValue ?? string.Empty;
-                    }
-                });
-            }
-
-            if (_advancedToggle != null)
-            {
-                _advancedToggle.value = _advancedMode;
-                _advancedToggle.RegisterValueChangedCallback(evt =>
-                {
-                    _advancedMode = evt.newValue;
-                    RefreshEditorMode();
-                });
-            }
-
-            _examplesButton?.RegisterCallback<ClickEvent>(_ => ShowExamplesMenu());
-            _functionsButton?.RegisterCallback<ClickEvent>(_ => ShowFunctionMenu());
-            _helpButton?.RegisterCallback<ClickEvent>(_ => ShowSyntaxHelp());
-
-            _autoDetectButton?.RegisterCallback<ClickEvent>(_ => AutoDetectInputs());
-            _addInputButton?.RegisterCallback<ClickEvent>(_ => AddManualInput());
-            _clearInputsButton?.RegisterCallback<ClickEvent>(_ => ClearInputs());
-            _randomInputsButton?.RegisterCallback<ClickEvent>(_ => RandomizeInputs());
-            _evaluateButton?.RegisterCallback<ClickEvent>(_ => EvaluateFormula());
-
-            _codeEditor.SetTextWithoutNotify(_formulaExpression);
-            _basicExpression?.SetValueWithoutNotify(_formulaExpression);
-            _idField?.SetValueWithoutNotify(_formulaId);
-        }
-
-        private void RefreshEditorMode()
-        {
-            if (_basicExpression == null || _codeEditor == null)
-            {
-                return;
-            }
-
-            if (_advancedMode)
-            {
-                _basicExpression.style.display = DisplayStyle.None;
-                _codeEditor.style.display = DisplayStyle.Flex;
-                _codeEditor.SetTextWithoutNotify(_formulaExpression);
-            }
-            else
-            {
-                _basicExpression.style.display = DisplayStyle.Flex;
-                _codeEditor.style.display = DisplayStyle.None;
-                _basicExpression.SetValueWithoutNotify(_formulaExpression);
-            }
-        }
-
-        private void RefreshInputsUI()
-        {
-            if (_inputsContainer == null)
-            {
-                return;
-            }
-
-            _inputsContainer.Clear();
-            _inputRows.Clear();
-
-            if (_testInputs.Count == 0)
-            {
-                var empty = new Label("No inputs. Click 'Auto-Detect' or add manually.")
-                {
-                    style =
-                    {
-                        unityTextAlign = TextAnchor.MiddleLeft,
-                        color = new Color(0.75f, 0.75f, 0.75f)
-                    }
+                    Text = _formulaExpression,
+                    Highlighter = HighlightFormula
                 };
-                _inputsContainer.Add(empty);
-                return;
+                _codeEditor.TextChanged += OnAdvancedTextChanged;
             }
 
-            foreach (var pair in _testInputs)
-            {
-                AddInputRow(pair.Key, pair.Value);
-            }
+            GUILayout.Space(8f);
+            DrawHeader();
+            GUILayout.Space(8f);
+
+            DrawFormulaEditor();
+            GUILayout.Space(12f);
+
+            DrawInputsSection();
+            GUILayout.Space(12f);
+
+            DrawEvaluationSection();
+            GUILayout.Space(12f);
+
+            DrawStatus();
         }
 
-        private void AddInputRow(string key, float value)
+        private void DrawHeader()
         {
-            if (_inputsContainer == null)
+            var titleStyle = new GUIStyle(EditorStyles.boldLabel)
             {
-                return;
-            }
-
-            var rowElement = new VisualElement();
-            rowElement.AddToClassList("input-row");
-
-            var label = new Label(key);
-            label.AddToClassList("input-row__label");
-            rowElement.Add(label);
-
-            var valueField = new FloatField
-            {
-                value = value
+                fontSize = 18,
+                alignment = TextAnchor.MiddleCenter
             };
-            valueField.AddToClassList("input-row__field");
-            valueField.RegisterValueChangedCallback(evt =>
-            {
-                _testInputs[key] = evt.newValue;
-            });
-            rowElement.Add(valueField);
 
-            var removeButton = new Button(() =>
-            {
-                _testInputs.Remove(key);
-                RefreshInputsUI();
-            })
-            {
-                text = "×"
-            };
-            removeButton.AddToClassList("input-row__remove");
-            rowElement.Add(removeButton);
-
-            _inputsContainer.Add(rowElement);
-            _inputRows.Add(new InputRow(key, label, valueField, removeButton));
+            GUILayout.Label("Formula Builder", titleStyle, GUILayout.ExpandWidth(true));
+            EditorGUILayout.HelpBox("Create and test formulas with advanced editing.", MessageType.None);
         }
 
-        private void OnAdvancedExpressionChanged(string value)
+        private void DrawFormulaEditor()
         {
-            if (_advancedMode)
+            EditorGUILayout.LabelField("Formula", EditorStyles.boldLabel);
+            using (new EditorGUILayout.VerticalScope("box"))
             {
-                _formulaExpression = value ?? string.Empty;
+                EditorGUI.BeginChangeCheck();
+                string newId = EditorGUILayout.TextField("Formula ID", _formulaId);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    _formulaId = newId.Trim();
+                }
+
+                GUILayout.Space(4f);
+
+                bool newAdvanced = EditorGUILayout.Toggle("Advanced Editor", _advancedMode);
+                if (newAdvanced != _advancedMode)
+                {
+                    _advancedMode = newAdvanced;
+                    if (_advancedMode)
+                    {
+                        _codeEditor.Text = _formulaExpression;
+                        _codeEditor.RequestFocus();
+                    }
+                }
+
+                GUILayout.Space(4f);
+
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    GUILayout.Label("Expression", EditorStyles.miniBoldLabel);
+                    GUILayout.FlexibleSpace();
+                    using (new EditorGUI.DisabledScope(_examples.Count == 0))
+                    {
+                        if (GUILayout.Button("Examples", EditorStyles.miniButton))
+                        {
+                            ShowExamplesMenu();
+                        }
+                    }
+
+                    if (GUILayout.Button("Functions", EditorStyles.miniButton))
+                    {
+                        ShowFunctionsMenu();
+                    }
+
+                    if (GUILayout.Button("Help", EditorStyles.miniButton))
+                    {
+                        ShowSyntaxHelp();
+                    }
+                }
+
+                GUILayout.Space(4f);
+
+                if (_advancedMode)
+                {
+                    Rect editorRect = GUILayoutUtility.GetRect(GUIContent.none, GUIStyle.none, GUILayout.Height(220f), GUILayout.ExpandHeight(true));
+                    _codeEditor.Text = _formulaExpression;
+                    _codeEditor.OnGUI(editorRect);
+                }
+                else
+                {
+                    EditorGUI.BeginChangeCheck();
+                    string updated = EditorGUILayout.TextArea(_formulaExpression, EditorStyles.textArea, GUILayout.Height(160f));
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        _formulaExpression = updated;
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(_examplesError))
+                {
+                    EditorGUILayout.HelpBox(_examplesError, MessageType.Warning);
+                }
             }
         }
 
-        private void AddManualInput()
+        private void DrawInputsSection()
         {
-            string name = GenerateUniqueInputName();
-            _testInputs[name] = 0f;
-            RefreshInputsUI();
+            EditorGUILayout.LabelField("Inputs", EditorStyles.boldLabel);
+            using (new EditorGUILayout.VerticalScope("box"))
+            {
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    if (GUILayout.Button("Auto-Detect Inputs"))
+                    {
+                        AutoDetectInputs();
+                    }
+
+                    if (GUILayout.Button("Add Input"))
+                    {
+                        string name = GenerateUniqueInputName();
+                        _testInputs[name] = 0f;
+                    }
+
+                    using (new EditorGUI.DisabledScope(_testInputs.Count == 0))
+                    {
+                        if (GUILayout.Button("Clear"))
+                        {
+                            _testInputs.Clear();
+                        }
+
+                        if (GUILayout.Button("Random Values"))
+                        {
+                            ApplyRandomValues();
+                        }
+                    }
+                }
+
+                GUILayout.Space(4f);
+
+                if (_testInputs.Count == 0)
+                {
+                    EditorGUILayout.HelpBox("No inputs. Detect or add manually.", MessageType.Info);
+                }
+                else
+                {
+                    _inputsScroll = EditorGUILayout.BeginScrollView(_inputsScroll, GUILayout.Height(160f));
+                    string[] keys = _testInputs.Keys.ToArray();
+                    foreach (string key in keys)
+                    {
+                        using (new EditorGUILayout.HorizontalScope())
+                        {
+                            GUILayout.Label(key, GUILayout.Width(160f));
+                            _testInputs[key] = EditorGUILayout.FloatField(_testInputs[key]);
+                            if (GUILayout.Button("✕", GUILayout.Width(24f)))
+                            {
+                                _testInputs.Remove(key);
+                                GUIUtility.ExitGUI();
+                            }
+                        }
+                    }
+
+                    EditorGUILayout.EndScrollView();
+                }
+            }
         }
 
-        private void ClearInputs()
+        private void DrawEvaluationSection()
         {
-            _testInputs.Clear();
-            RefreshInputsUI();
+            EditorGUILayout.LabelField("Evaluation", EditorStyles.boldLabel);
+            using (new EditorGUILayout.VerticalScope("box"))
+            {
+                GUILayout.Space(2f);
+                if (GUILayout.Button("Evaluate", GUILayout.Height(32f)))
+                {
+                    EvaluateFormula();
+                }
+
+                GUILayout.Space(6f);
+                GUILayout.Label("Result", EditorStyles.miniBoldLabel);
+                var resultStyle = new GUIStyle(EditorStyles.helpBox)
+                {
+                    alignment = TextAnchor.MiddleCenter,
+                    fontSize = 18,
+                    fontStyle = FontStyle.Bold
+                };
+                GUILayout.Box(_evaluationResult.ToString("F4"), resultStyle, GUILayout.Height(40f));
+            }
         }
 
-        private void RandomizeInputs()
+        private void DrawStatus()
         {
-            foreach (var key in _testInputs.Keys.ToList())
+            if (!string.IsNullOrEmpty(_statusMessage))
+            {
+                EditorGUILayout.HelpBox(_statusMessage, _statusType);
+            }
+        }
+
+        private void OnAdvancedTextChanged(string text)
+        {
+            _formulaExpression = text;
+        }
+
+        private void ApplyRandomValues()
+        {
+            string[] keys = _testInputs.Keys.ToArray();
+            foreach (string key in keys)
             {
                 _testInputs[key] = UnityEngine.Random.Range(0f, 100f);
             }
-
-            foreach (var row in _inputRows)
-            {
-                if (_testInputs.TryGetValue(row.Key, out float value))
-                {
-                    row.Field.SetValueWithoutNotify(value);
-                }
-            }
         }
 
-        private bool AutoDetectInputs(bool silent = false)
+        private void AutoDetectInputs()
         {
             _testInputs.Clear();
-
             if (string.IsNullOrEmpty(_formulaId) || string.IsNullOrEmpty(_formulaExpression))
             {
-                if (!silent)
-                {
-                    ShowStatus("Enter formula ID and expression first", MessageType.Warning);
-                }
-
-                RefreshInputsUI();
-                return false;
-            }
-
-            bool success = _tempLoader.RegisterFormula(_formulaId, _formulaExpression);
-            if (success)
-            {
-                var inputs = _tempLoader.GetRequiredInputs(_formulaId);
-                foreach (var input in inputs)
-                {
-                    if (!_testInputs.ContainsKey(input))
-                    {
-                        _testInputs[input] = 0f;
-                    }
-                }
-
-                RefreshInputsUI();
-
-                if (!silent)
-                {
-                    ShowStatus($"✓ Detected {inputs.Count} inputs: {string.Join(", ", inputs)}", MessageType.Info);
-                }
-
-                return true;
-            }
-
-            if (!silent)
-            {
-                ShowStatus("❌ Formula has errors", MessageType.Error);
-            }
-
-            RefreshInputsUI();
-            return false;
-        }
-
-        private void EvaluateFormula()
-        {
-            if (string.IsNullOrEmpty(_formulaId) || string.IsNullOrEmpty(_formulaExpression))
-            {
-                ShowStatus("Enter formula ID and expression first", MessageType.Warning);
+                ShowStatus("Enter formula ID and expression first.", MessageType.Warning);
                 return;
             }
 
             bool success = _tempLoader.RegisterFormula(_formulaId, _formulaExpression);
             if (!success)
             {
-                ShowStatus("❌ Formula has syntax errors", MessageType.Error);
+                ShowStatus("Formula contains errors.", MessageType.Error);
+                return;
+            }
+
+            var inputs = _tempLoader.GetRequiredInputs(_formulaId);
+            foreach (string input in inputs)
+            {
+                if (!_testInputs.ContainsKey(input))
+                {
+                    _testInputs[input] = 0f;
+                }
+            }
+
+            ShowStatus(inputs.Count > 0
+                ? $"Detected inputs: {string.Join(", ", inputs)}"
+                : "No inputs detected.", MessageType.Info);
+        }
+
+        private void EvaluateFormula()
+        {
+            if (string.IsNullOrEmpty(_formulaId) || string.IsNullOrEmpty(_formulaExpression))
+            {
+                ShowStatus("Enter formula ID and expression first.", MessageType.Warning);
+                return;
+            }
+
+            bool success = _tempLoader.RegisterFormula(_formulaId, _formulaExpression);
+            if (!success)
+            {
+                ShowStatus("Formula contains syntax errors.", MessageType.Error);
                 return;
             }
 
             try
             {
-                float result = _tempRunner.Evaluate(_formulaId, _testInputs);
-                _resultLabel.text = result.ToString("F4");
-                ShowStatus("✓ Evaluation successful!", MessageType.Info);
+                _evaluationResult = _tempRunner.Evaluate(_formulaId, _testInputs);
+                ShowStatus("Evaluation successful.", MessageType.Info);
             }
             catch (Exception ex)
             {
-                _resultLabel.text = "0.0000";
-                ShowStatus($"❌ Error: {ex.Message}", MessageType.Error);
+                ShowStatus($"Evaluation failed: {ex.Message}", MessageType.Error);
+                _evaluationResult = 0f;
             }
         }
 
         private void ShowStatus(string message, MessageType type)
         {
-            if (_statusBox == null)
-            {
-                return;
-            }
-
-            _statusBox.text = message;
-            _statusBox.messageType = type;
-            if (string.IsNullOrEmpty(message))
-            {
-                _statusBox.RemoveFromClassList("status--visible");
-            }
-            else
-            {
-                _statusBox.AddToClassList("status--visible");
-            }
-        }
-
-        private void UpdateStatus()
-        {
-            ShowStatus(string.Empty, MessageType.Info);
+            _statusMessage = message;
+            _statusType = type;
+            Repaint();
         }
 
         private void ShowExamplesMenu()
         {
-            var menu = new GenericMenu();
-
-            if (!string.IsNullOrEmpty(_examplesError))
-            {
-                menu.AddDisabledItem(new GUIContent(_examplesError));
-            }
-            else if (_examples.Count == 0)
-            {
-                menu.AddDisabledItem(new GUIContent("No examples found"));
-            }
-            else
-            {
-                bool firstCategory = true;
-                foreach (var grouping in _examples.GroupBy(e => e.Category))
-                {
-                    if (!firstCategory)
-                    {
-                        menu.AddSeparator(string.Empty);
-                    }
-
-                    foreach (var example in grouping)
-                    {
-                        string path = $"{example.Category}/{example.Name}";
-                        menu.AddItem(new GUIContent(path), false, () => ApplyExample(example));
-                    }
-
-                    firstCategory = false;
-                }
-            }
-
-            ShowMenu(menu, _examplesButton);
-        }
-
-        private void ShowFunctionMenu()
-        {
-            var menu = new GenericMenu();
-            foreach (var snippet in FunctionSnippets)
-            {
-                menu.AddItem(new GUIContent($"{snippet.Name}    — {snippet.Description}"), false, () => InsertFunctionSnippet(snippet.Snippet));
-            }
-
-            ShowMenu(menu, _functionsButton);
-        }
-
-        private void ShowMenu(GenericMenu menu, VisualElement source)
-        {
-            if (menu == null || source == null)
+            if (_examples.Count == 0)
             {
                 return;
             }
 
-            Rect rect = source.worldBound;
-            menu.DropDown(new Rect(rect.position, Vector2.zero));
+            GenericMenu menu = new GenericMenu();
+            foreach (var group in _examples.GroupBy(e => e.Category))
+            {
+                foreach (var example in group)
+                {
+                    string label = $"{group.Key}/{example.Name}";
+                    menu.AddItem(new GUIContent(label), false, () => ApplyExample(example));
+                }
+            }
+
+            menu.ShowAsContext();
         }
 
         private void ApplyExample(FormulaExample example)
         {
             _formulaId = example.Id;
             _formulaExpression = example.Expression;
+            _codeEditor.Text = _formulaExpression;
+            _codeEditor.RequestFocus();
+            AutoDetectInputs();
+        }
 
-            _idField?.SetValueWithoutNotify(_formulaId);
-            if (_advancedMode)
+        private void ShowFunctionsMenu()
+        {
+            GenericMenu menu = new GenericMenu();
+            foreach (var snippet in FunctionSnippets)
             {
-                _codeEditor.SetTextWithoutNotify(_formulaExpression);
+                menu.AddItem(new GUIContent(snippet.Name), false, () => InsertFunctionSnippet(snippet));
+            }
+
+            menu.ShowAsContext();
+        }
+
+        private void InsertFunctionSnippet(FunctionSnippet snippet)
+        {
+            if (_advancedMode && _codeEditor != null)
+            {
+                _codeEditor.InsertText(snippet.Snippet);
             }
             else
             {
-                _basicExpression.SetValueWithoutNotify(_formulaExpression);
-            }
-
-            AutoDetectInputs(true);
-        }
-
-        private void InsertFunctionSnippet(string snippet)
-        {
-            if (string.IsNullOrEmpty(snippet))
-            {
-                return;
-            }
-
-            if (_advancedMode)
-            {
-                _codeEditor.InsertSnippet(snippet);
-                _codeEditor.FocusInput();
-            }
-            else if (_basicExpression != null)
-            {
-                var engine = _basicExpression.editorEngine;
-                string current = _basicExpression.value ?? string.Empty;
-                if (engine == null)
-                {
-                    _basicExpression.value = current + snippet;
-                }
-                else
-                {
-                    int start = Math.Min(engine.cursorIndex, engine.selectIndex);
-                    int end = Math.Max(engine.cursorIndex, engine.selectIndex);
-                    start = Mathf.Clamp(start, 0, current.Length);
-                    end = Mathf.Clamp(end, 0, current.Length);
-
-                    string before = current.Substring(0, start);
-                    string after = current.Substring(end);
-                    string updated = before + snippet + after;
-                    _basicExpression.value = updated;
-                    int newIndex = before.Length + snippet.Length;
-                    engine.SelectRange(newIndex, newIndex);
-                }
-
-                _formulaExpression = _basicExpression.value;
+                string current = _formulaExpression ?? string.Empty;
+                current += (current.Length > 0 ? "\n" : string.Empty) + snippet.Snippet;
+                _formulaExpression = current;
             }
         }
 
@@ -544,8 +439,8 @@ namespace FormulaKit.Editor.Tools.Tools
         {
             EditorUtility.DisplayDialog(
                 "Formula Syntax",
-                "Supported keywords: let, if, elseif, else, return, true, false\n" +
-                "Supported functions: " + string.Join(", ", FunctionSnippets.Select(f => f.Name)) + "\n" +
+                "Keywords: let, if, elseif, else, return, true, false\n" +
+                "Functions: " + string.Join(", ", FunctionSnippets.Select(f => f.Name)) + "\n" +
                 "Operators: +, -, *, /, %, ==, !=, <, <=, >, >=, &&, ||, ^",
                 "Close");
         }
@@ -558,82 +453,76 @@ namespace FormulaKit.Editor.Tools.Tools
             TextAsset asset = AssetDatabase.LoadAssetAtPath<TextAsset>(ExamplesAssetPath);
             if (asset == null)
             {
-                _examplesError = "FormulaExamples.txt not found";
+                _examplesError = "FormulaExamples.txt not found.";
                 return;
             }
 
             try
             {
-                using (StringReader reader = new StringReader(asset.text))
+                string[] lines = asset.text.Replace("\r", string.Empty).Split('\n');
+                int index = 0;
+                while (index < lines.Length)
                 {
-                    string line;
-                    string currentCategory = null;
-                    string currentName = null;
-                    string currentId = null;
-                    List<string> expressionLines = null;
+                    string header = lines[index];
+                    index++;
 
-                    void Commit()
+                    if (string.IsNullOrWhiteSpace(header) || header.StartsWith("#"))
                     {
-                        if (string.IsNullOrEmpty(currentCategory) ||
-                            string.IsNullOrEmpty(currentName) ||
-                            string.IsNullOrEmpty(currentId) ||
-                            expressionLines == null)
-                        {
-                            return;
-                        }
-
-                        string expression = string.Join("\n", expressionLines).TrimEnd();
-                        _examples.Add(new FormulaExample(currentCategory, currentName, currentId, expression));
+                        continue;
                     }
 
-                    while ((line = reader.ReadLine()) != null)
+                    string[] parts = header.Split('|');
+                    if (parts.Length < 3)
                     {
-                        if (string.IsNullOrWhiteSpace(line))
-                        {
-                            Commit();
-                            currentCategory = null;
-                            currentName = null;
-                            currentId = null;
-                            expressionLines = null;
-                            continue;
-                        }
+                        continue;
+                    }
 
+                    string category = parts[0].Trim();
+                    string name = parts[1].Trim();
+                    string id = parts[2].Trim();
+                    List<string> expressionLines = new List<string>();
+
+                    while (index < lines.Length)
+                    {
+                        string line = lines[index];
                         if (line.StartsWith("#"))
                         {
-                            Commit();
-                            currentCategory = line.Substring(1).Trim();
-                            currentName = null;
-                            currentId = null;
-                            expressionLines = null;
-                            continue;
+                            break;
                         }
 
-                        if (line.StartsWith("-"))
+                        if (IsHeaderCandidate(line))
                         {
-                            Commit();
-                            string[] parts = line.Substring(1).Split('|');
-                            if (parts.Length >= 3)
-                            {
-                                currentName = parts[0].Trim();
-                                currentId = parts[1].Trim();
-                                currentCategory ??= "Examples";
-                                expressionLines = new List<string>();
-                            }
-
-                            continue;
+                            break;
                         }
 
-                        expressionLines ??= new List<string>();
                         expressionLines.Add(line);
+                        index++;
                     }
 
-                    Commit();
+                    string expression = string.Join("\n", expressionLines).Trim('\n');
+                    _examples.Add(new FormulaExample(category, name, id, expression));
                 }
             }
             catch (Exception ex)
             {
                 _examplesError = $"Failed to load examples: {ex.Message}";
             }
+        }
+
+        private static bool IsHeaderCandidate(string line)
+        {
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                return false;
+            }
+
+            string[] parts = line.Split('|');
+            if (parts.Length < 3)
+            {
+                return false;
+            }
+
+            return parts.Take(3).All(part => !string.IsNullOrWhiteSpace(part));
         }
 
         private string GenerateUniqueInputName()
@@ -717,22 +606,6 @@ namespace FormulaKit.Editor.Tools.Tools
                 Name = name;
                 Snippet = snippet;
                 Description = description;
-            }
-        }
-
-        private readonly struct InputRow
-        {
-            public string Key { get; }
-            public Label Label { get; }
-            public FloatField Field { get; }
-            public Button RemoveButton { get; }
-
-            public InputRow(string key, Label label, FloatField field, Button removeButton)
-            {
-                Key = key;
-                Label = label;
-                Field = field;
-                RemoveButton = removeButton;
             }
         }
     }
