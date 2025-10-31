@@ -1,6 +1,9 @@
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using FormulaKit.Runtime;
 using NUnit.Framework;
+using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace FormulaKit.Editor.Tests
 {
@@ -38,6 +41,7 @@ namespace FormulaKit.Editor.Tests
             string receivedError = null;
             _loader.OnError += message => receivedError = message;
 
+            LogAssert.Expect(LogType.Error, new Regex(@"\[FormulaParser\] Parse error"));
             bool registered = _loader.RegisterFormula("invalid", "a +");
 
             Assert.That(registered, Is.False, "Registration should fail when the expression is invalid");
@@ -55,6 +59,7 @@ namespace FormulaKit.Editor.Tests
                 new FormulaDefinition("another", "let tmp = a + 1; tmp + b")
             };
 
+            LogAssert.Expect(LogType.Error, new Regex(@"\[FormulaParser\] Parse error"));
             int registeredCount = _loader.RegisterFormulas(definitions);
 
             Assert.That(registeredCount, Is.EqualTo(2));

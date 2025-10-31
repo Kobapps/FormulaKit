@@ -9,7 +9,7 @@ namespace FormulaKit.Runtime
 {
     /// <summary>
     /// Unified formula parser supporting both simple expressions and advanced features.
-    /// Automatically detects and parses: variables, conditionals, comparisons, logical operators, etc.
+    /// Automatically detects and parses: vari ables, conditionals, comparisons, logical operators, etc.
     /// </summary>
     public class FormulaParser
     {
