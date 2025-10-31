@@ -582,9 +582,6 @@ Examples:
                 state.textColor = transparent;
             }
 
-            _advancedInputStyle.selectionColor = EditorStyles.textArea.selectionColor;
-            _advancedInputStyle.cursorColor = EditorStyles.textArea.cursorColor;
-
             _syntaxHighlightStyle = new GUIStyle(EditorStyles.textArea)
             {
                 wordWrap = true,
