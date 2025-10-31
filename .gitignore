@@ -97,3 +97,8 @@ InitTestScene*.unity*
 
 # Auto-generated scenes by play mode tests
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
+FormulaKit/.idea
+FormulaKit/Temp
+FormulaKit/UserSettings
+FormulaKit/obj
+FormulaKit/Library
