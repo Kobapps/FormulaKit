@@ -1,0 +1,16 @@
+{
+  "name": "com.formulakit.formulakit",
+  "version": "1.0.0",
+  "displayName": "Formula Kit",
+  "description": "Runtime formula authoring and evaluation utilities with editor tooling for Unity projects.",
+  "unity": "6000.1",
+  "author": {
+    "name": "FormulaKit Contributors"
+  },
+  "keywords": [
+    "formula",
+    "math",
+    "expressions"
+  ],
+  "dependencies": {}
+}
