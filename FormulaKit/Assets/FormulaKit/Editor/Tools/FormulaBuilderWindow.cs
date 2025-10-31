@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using FormulaKit.Editor.Tools.Utils;
 using FormulaKit.Runtime;
-using Joshcamas.CodeEditor;
 using UnityEditor;
 using UnityEngine;
 
