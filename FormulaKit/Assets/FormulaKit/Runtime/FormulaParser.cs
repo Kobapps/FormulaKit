@@ -31,9 +31,21 @@ namespace FormulaKit.Runtime
             _inputVariables = new HashSet<string>();
             _localVariables = new HashSet<string>();
 
-            var rootNode = ParseStatements();
+            try
+            {
+                var rootNode = ParseStatements();
 
-            return new Formula(formulaExpression, rootNode, _inputVariables);
+                return new Formula(formulaExpression, rootNode, _inputVariables);
+            }
+            catch (FormatException ex)
+            {
+                throw CreateDetailedParseException(ex);
+            }
+            catch (Exception ex)
+            {
+                LogUnexpectedParserException(ex);
+                throw;
+            }
         }
 
         // ============== STATEMENT PARSING ==============
@@ -696,6 +708,139 @@ namespace FormulaKit.Runtime
             {
                 _position++;
             }
+        }
+
+        private FormatException CreateDetailedParseException(FormatException ex)
+        {
+            var context = BuildErrorContext();
+            var messageBuilder = new StringBuilder();
+            messageBuilder.Append($"Parse error at line {context.line}, column {context.column}: {ex.Message}");
+
+            if (!string.IsNullOrEmpty(context.lineText))
+            {
+                messageBuilder.Append('\n');
+                messageBuilder.Append(context.lineText);
+                messageBuilder.Append('\n');
+                messageBuilder.Append(context.pointer);
+            }
+
+            messageBuilder.Append("\nExpression:\n");
+            messageBuilder.Append(_expression);
+
+            Debug.LogError($"[FormulaParser] {messageBuilder}");
+
+            return new FormatException(messageBuilder.ToString(), ex);
+        }
+
+        private void LogUnexpectedParserException(Exception ex)
+        {
+            var context = BuildErrorContext();
+            var messageBuilder = new StringBuilder();
+            messageBuilder.Append($"Unexpected error at line {context.line}, column {context.column}: {ex.Message}");
+
+            if (!string.IsNullOrEmpty(context.lineText))
+            {
+                messageBuilder.Append('\n');
+                messageBuilder.Append(context.lineText);
+                messageBuilder.Append('\n');
+                messageBuilder.Append(context.pointer);
+            }
+
+            messageBuilder.Append("\nExpression:\n");
+            messageBuilder.Append(_expression);
+
+            Debug.LogError($"[FormulaParser] {messageBuilder}");
+        }
+
+        private (int line, int column, string lineText, string pointer) BuildErrorContext()
+        {
+            if (string.IsNullOrEmpty(_expression))
+            {
+                return (1, 1, string.Empty, "^");
+            }
+
+            int position = GetErrorPosition();
+            var (line, column) = GetLineAndColumn(position);
+            string lineText = GetLineText(position);
+            string pointer = BuildPointer(column, lineText.Length);
+
+            return (line, column, lineText, pointer);
+        }
+
+        private int GetErrorPosition()
+        {
+            if (string.IsNullOrEmpty(_expression))
+            {
+                return 0;
+            }
+
+            int maxIndex = Math.Max(0, _expression.Length - 1);
+            int clamped = Math.Max(0, Math.Min(_position, maxIndex));
+
+            return clamped;
+        }
+
+        private (int line, int column) GetLineAndColumn(int position)
+        {
+            int line = 1;
+            int column = 1;
+
+            for (int i = 0; i < position && i < _expression.Length; i++)
+            {
+                char current = _expression[i];
+                if (current == '\n')
+                {
+                    line++;
+                    column = 1;
+                }
+                else if (current != '\r')
+                {
+                    column++;
+                }
+            }
+
+            return (line, column);
+        }
+
+        private string GetLineText(int position)
+        {
+            if (string.IsNullOrEmpty(_expression))
+            {
+                return string.Empty;
+            }
+
+            int start = position;
+            while (start > 0)
+            {
+                char previous = _expression[start - 1];
+                if (previous == '\n' || previous == '\r')
+                {
+                    break;
+                }
+
+                start--;
+            }
+
+            int end = position;
+            while (end < _expression.Length)
+            {
+                char current = _expression[end];
+                if (current == '\n' || current == '\r')
+                {
+                    break;
+                }
+
+                end++;
+            }
+
+            return _expression.Substring(start, end - start);
+        }
+
+        private string BuildPointer(int column, int lineLength)
+        {
+            int maxColumn = lineLength > 0 ? lineLength + 1 : 1;
+            int safeColumn = Math.Max(1, Math.Min(column, maxColumn));
+            return new string(' ', safeColumn - 1) + '^';
         }
 
         private void SkipWhitespaceAndNewlines()
