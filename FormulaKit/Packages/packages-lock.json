@@ -475,8 +475,8 @@
         "com.unity.modules.subsystems": "1.0.0"
       }
     },
-    "com.formulakit.formulakit": {
-      "version": "file:../Packages/com.formulakit.formulakit",
+    "com.barnaff.formulakit": {
+      "version": "file:../Packages/com.barnaff.formulakit",
       "depth": 0,
       "source": "local",
       "dependencies": {}

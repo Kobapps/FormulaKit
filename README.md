@@ -4,7 +4,7 @@ Formula Kit is a Unity package that provides runtime and editor tooling for defi
 
 ## Repository layout
 
-- `Packages/com.formulakit.formulakit` — Unity package that can be consumed via Git.
+- `Packages/com.barnaff.formulakit` — Unity package that can be consumed via Git.
 - `FormulaKit/` — Sample Unity project used to develop and validate the package. The project references the package through a relative path in its `Packages/manifest.json` file.
 
 ## Installing the package from Git
@@ -14,7 +14,7 @@ Add the package to your Unity project by editing `Packages/manifest.json` and in
 ```json
 {
   "dependencies": {
-    "com.formulakit.formulakit": "https://github.com/<your-org>/FormulaKit.git?path=Packages/com.formulakit.formulakit#v1.0.0"
+    "com.barnaff.formulakit": "https://github.com/<your-org>/FormulaKit.git?path=Packages/com.barnaff.formulakit#v1.0.0"
   }
 }
 ```
@@ -23,7 +23,7 @@ Replace `<your-org>` with the account hosting this repository and adjust the tag
 
 ## Local development
 
-When working inside this repository, open the `FormulaKit` Unity project. Unity will import the package via the relative file reference defined in `Packages/manifest.json`, allowing you to iterate on the package while running the sample scenes.
+When working inside this repository, open the `FormulaKit/FormulaKit` Unity project folder in the Unity Editor. Unity will import the package via the relative file reference defined in `Packages/manifest.json`, allowing you to iterate on the package while running the sample scenes.
 
 ## License
 
