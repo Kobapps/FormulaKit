@@ -31,12 +31,18 @@ namespace FormulaKit.Editor.Tools.Tools
         private string _examplesError;
 
         private EditorView _editorView;
+        private EditorViewOptions _editorOptions;
         private bool _editorViewDirty = true;
 
         private static readonly Regex NumberRegex = new Regex(@"\b\d+(\.\d+)?\b", RegexOptions.Compiled);
         private static readonly Regex KeywordRegex = new Regex(@"\b(let|if|else|elseif|return|true|false)\b", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static readonly Regex FunctionRegex = new Regex(@"\b(abs|acos|asin|atan|ceil|clamp|clamp01|cos|exp|floor|lerp|log|max|min|negative|pow|rand|randf|random|round|sign|sin|sqrt|tan)\b", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static readonly Regex OperatorRegex = new Regex(@"[\+\-\*/=<>!&\|\^]+", RegexOptions.Compiled);
+
+        private static readonly string[] FormulaKeywords =
+        {
+            "let", "if", "elseif", "else", "return", "true", "false"
+        };
 
         private static readonly FunctionSnippet[] FunctionSnippets =
         {
@@ -82,6 +88,24 @@ namespace FormulaKit.Editor.Tools.Tools
             LoadExamples();
         }
 
+        private EditorViewOptions CreateEditorOptions()
+        {
+            var options = new EditorViewOptions
+            {
+                Keywords = FormulaKeywords,
+                FunctionNames = FunctionSnippets.Select(snippet => snippet.Name).ToArray(),
+                ShowLineNumbers = true
+            };
+
+            options.Palette.Keyword = new Color32(86, 156, 214, 255);
+            options.Palette.Parameter = options.Palette.Keyword;
+            options.Palette.Function = new Color32(220, 220, 170, 255);
+            options.Palette.Operator = new Color32(212, 212, 212, 255);
+            options.Palette.Flag = options.Palette.Operator;
+
+            return options;
+        }
+
         private void InitializeEditorView()
         {
             if (_editorView != null)
@@ -89,7 +113,8 @@ namespace FormulaKit.Editor.Tools.Tools
                 _editorView.RepaintAction -= Repaint;
             }
 
-            _editorView = new EditorView();
+            _editorOptions ??= CreateEditorOptions();
+            _editorView = new EditorView(_editorOptions);
             _editorView.RepaintAction += Repaint;
             _editorView.OnEnable(_formulaExpression ?? string.Empty);
             _editorViewDirty = false;

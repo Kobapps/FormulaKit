@@ -10,9 +10,115 @@ using System.Text.RegularExpressions;
 namespace Joshcamas.CodeEditor
 {
     [Serializable]
+    public class EditorViewPalette
+    {
+        public Color32 WindowBackground { get; set; } = new Color32(34, 34, 34, 255);
+        public Color32 LineNumberBackground { get; set; } = new Color32(15, 15, 15, 255);
+        public Color LineNumberText { get; set; } = Color.white;
+        public Color32 DefaultText { get; set; } = new Color32(255, 255, 255, 255);
+        public Color32 Keyword { get; set; } = new Color32(244, 0, 101, 255);
+        public Color32 Function { get; set; } = new Color32(165, 255, 11, 255);
+        public Color32 Parameter { get; set; } = new Color32(244, 0, 101, 255);
+        public Color32 String { get; set; } = new Color32(237, 158, 38, 255);
+        public Color32 Comment { get; set; } = new Color32(120, 120, 120, 255);
+        public Color32 InlineCode { get; set; } = new Color32(165, 255, 11, 255);
+        public Color32 Flag { get; set; } = new Color32(180, 180, 180, 255);
+        public Color32 Operator { get; set; } = new Color32(180, 180, 180, 255);
+        public Color32 LineHighlight { get; set; } = new Color32(255, 255, 255, 25);
+        public Color32 Selection { get; set; } = new Color32(255, 255, 255, 45);
+        public Color Cursor { get; set; } = new Color(1f, 1f, 1f, 0.8f);
+    }
+
+    [Serializable]
+    public class EditorViewOptions
+    {
+        private static readonly string[] DefaultKeywords =
+        {
+            "False", "None", "True", "and", "as", "assert", "break", "class", "continue", "def", "del", "elif",
+            "else", "except", "finally", "for", "from", "global", "if", "import", "in", "is", "lambda", "nonlocal",
+            "not", "or", "pass", "raise", "return", "try", "while", "with", "yield", "self"
+        };
+
+        private IEnumerable<string> keywords;
+        private IEnumerable<string> functionNames;
+        private HashSet<string> keywordLookup;
+        private HashSet<string> functionLookup;
+        private EditorViewPalette palette;
+
+        public EditorViewOptions()
+        {
+            keywords = DefaultKeywords;
+            functionNames = Array.Empty<string>();
+            palette = new EditorViewPalette();
+        }
+
+        public IEnumerable<string> Keywords
+        {
+            get => keywords;
+            set
+            {
+                keywords = value ?? DefaultKeywords;
+                keywordLookup = null;
+            }
+        }
+
+        public IEnumerable<string> FunctionNames
+        {
+            get => functionNames;
+            set
+            {
+                functionNames = value ?? Array.Empty<string>();
+                functionLookup = null;
+            }
+        }
+
+        public bool ShowLineNumbers { get; set; } = true;
+
+        public Vector2 Padding { get; set; } = new Vector2(44, 15);
+
+        public Vector2 CharacterSize { get; set; } = new Vector2(7, 19);
+
+        public int FontSize { get; set; } = 12;
+
+        public EditorViewPalette Palette
+        {
+            get => palette;
+            set => palette = value ?? new EditorViewPalette();
+        }
+
+        internal HashSet<string> KeywordLookup
+        {
+            get
+            {
+                if (keywordLookup == null)
+                {
+                    keywordLookup = new HashSet<string>(Keywords ?? DefaultKeywords, StringComparer.OrdinalIgnoreCase);
+                }
+
+                return keywordLookup;
+            }
+        }
+
+        internal HashSet<string> FunctionLookup
+        {
+            get
+            {
+                if (functionLookup == null)
+                {
+                    functionLookup = new HashSet<string>(FunctionNames ?? Array.Empty<string>(), StringComparer.OrdinalIgnoreCase);
+                }
+
+                return functionLookup;
+            }
+        }
+    }
+
+    [Serializable]
     public class EditorView
     {
         public ScriptEditorBuffer buffer;
+
+        private readonly EditorViewOptions options;
 
         [SerializeField]
         private Rect HighLine, LayoutRect, PositionSyntax;
@@ -42,7 +148,15 @@ namespace Joshcamas.CodeEditor
         /// </summary>
         private const string MatchCode = @"(\t)|(\{\{.+\}\})|(\[\[.+\]\])|(\w+)|(\s+)|(.)";
 
-        private EditorViewStyles Style = new EditorViewStyles();
+        private EditorViewStyles Style;
+
+        public EditorView(EditorViewOptions options = null)
+        {
+            this.options = options ?? new EditorViewOptions();
+            Padding = this.options.Padding;
+            FontSizeXY = this.options.CharacterSize;
+            Style = new EditorViewStyles(this.options);
+        }
 
         //Delegate For Repaint Inspector.
         public delegate void CodeRepaint();
@@ -149,7 +263,7 @@ namespace Joshcamas.CodeEditor
             //Code Rect Layout
             PositionSyntax = LayoutRect = GUILayoutUtility.GetRect(0, Screen.width, 1, Screen.height - Padding.y);
 
-            //Background ColorScheme
+            //Background
             GUI.Box(LayoutRect, GUIContent.none, Style.Background);
 
             //Bottom value of box
@@ -227,6 +341,11 @@ namespace Joshcamas.CodeEditor
         /// </summary>
         private void LineNumbers()
         {
+            if (!options.ShowLineNumbers)
+            {
+                return;
+            }
+
             //Background Lines
             GUI.Box(new Rect(PositionScroll.x, LayoutRect.y, 40, Screen.height + PositionScroll.y), GUIContent.none, Style.BackgroundLines);
 
@@ -519,63 +638,11 @@ namespace Joshcamas.CodeEditor
 
 
     /// <summary>
-    /// Syntax HighLight Code
-    /// </summary>
-    public static class ColorScheme  
-    {       
-        /// <summary>
-        /// The color of the background.
-        /// </summary>
-        public static Color32 Background  = new Color32(42, 50, 50, 255);
-
-        /// <summary>
-        /// The background color2.
-        /// </summary>
-        public static Color32 Background2 = new Color32(34, 34, 34, 255);
-
-        /// <summary>
-        /// The background color3.
-        /// </summary>
-        public static Color32 Background3 = new Color32(39, 40, 34, 255);
-
-        /// <summary>
-        /// White Letters
-        /// </summary>
-        public static Color32 White  = new Color32(255, 255, 255, 255);
-
-        /// <summary>               
-        /// Pink Keywords           
-        /// </summary>             
-        public static Color32 Pink   = new Color32(244, 0,   101, 255);
-
-        /// <summary>               
-        /// Molokai Green           
-        /// </summary>             
-        public static Color32 Green  = new Color32(165, 255, 11 , 255);
-
-        /// <summary>
-        /// Orange Strings
-        /// </summary>
-        public static Color32 Orange = new Color32(237, 158, 38, 255);
-
-        /// <summary>
-        /// Comments
-        /// </summary>
-        public static Color32 Gray   = new Color32(120, 120, 120, 255);
-
-        /// <summary>
-        /// Comments
-        /// </summary>
-        public static Color32 LightGray = new Color32(180, 180, 180, 255);
-
-    }
-
-
-    /// <summary>
     /// Editor view styles.
     /// </summary>
     public class EditorViewStyles
     {
+        private readonly EditorViewOptions options;
         private GUIStyle background;
         private GUIStyle font;
         private GUIStyle backgroundLines;
@@ -586,20 +653,15 @@ namespace Joshcamas.CodeEditor
         private GUIStyle interpreter;
         private static readonly char[] OperatorCharacters = "+-*/%<>=!&|^~?:.,()[]{}".ToCharArray();
 
-        /// <summary>
-        /// Python keywords
-        /// </summary>
-        private static string[] KeyWords = new string[]
-        {
-            "False", "None", "True", "and", "as", "assert", "break", "class", "continue", "def", "del", "elif",
-            "else", "except", "finally", "for", "from", "global", "if", "import", "in", "is", "lambda", "nonlocal",
-            "not", "or", "pass", "raise", "return", "try", "while", "with", "yield", "self"
-        };
-
 
         public bool BlockComment, LineComment, IsString = false;
 
         private string WhichQuote, triplequotes = string.Empty;
+
+        public EditorViewStyles(EditorViewOptions options)
+        {
+            this.options = options ?? throw new ArgumentNullException(nameof(options));
+        }
 
         public GUIStyle Background
         {
@@ -608,7 +670,7 @@ namespace Joshcamas.CodeEditor
                 if (background == null)
                 {
                     background = new GUIStyle();
-                    background.normal.background = TextureColor(ColorScheme.Background2);
+                    background.normal.background = TextureColor(options.Palette.WindowBackground);
                     return background;
                 }
 
@@ -624,7 +686,8 @@ namespace Joshcamas.CodeEditor
                 {
                     font = new GUIStyle();
                     //font.font = (Font)AssetDatabase.LoadMainAssetAtPath("Assets/Font/Monaco12.ttf");
-                    font.fontSize = 12;
+                    font.fontSize = options.FontSize;
+                    font.normal.textColor = options.Palette.DefaultText;
                     return font;
                 }
 
@@ -639,7 +702,7 @@ namespace Joshcamas.CodeEditor
                 if (backgroundLines == null)
                 {
                     backgroundLines = new GUIStyle();
-                    backgroundLines.normal.background = TextureColor(new Color32(15, 15, 15, 255));
+                    backgroundLines.normal.background = TextureColor(options.Palette.LineNumberBackground);
                     return backgroundLines;
                 }
 
@@ -654,10 +717,10 @@ namespace Joshcamas.CodeEditor
                 if (numberLines == null)
                 {
                     numberLines = new GUIStyle();
-                    numberLines.normal.textColor = Color.white;
+                    numberLines.normal.textColor = options.Palette.LineNumberText;
                     numberLines.font = FontGUIStyle.font;
                     numberLines.alignment = TextAnchor.UpperRight;
-                    numberLines.fontSize = 12;
+                    numberLines.fontSize = options.FontSize;
                     return numberLines;
                 }
 
@@ -673,7 +736,7 @@ namespace Joshcamas.CodeEditor
                 if (highLine == null)
                 {
                     highLine = new GUIStyle();
-                    highLine.normal.background = TextureColor(new Color32(255, 255, 255, 25));
+                    highLine.normal.background = TextureColor(options.Palette.LineHighlight);
                     return highLine;
                 }
 
@@ -689,7 +752,7 @@ namespace Joshcamas.CodeEditor
                 if (selection == null)
                 {
                     selection = new GUIStyle();
-                    selection.normal.background = TextureColor(new Color32(255, 255, 255, 45));
+                    selection.normal.background = TextureColor(options.Palette.Selection);
                     return selection;
                 }
 
@@ -705,7 +768,7 @@ namespace Joshcamas.CodeEditor
                 if (cursor == null)
                 {
                     cursor = new GUIStyle();
-                    cursor.normal.background = TextureColor(new Color(255, 255, 255, 0.8f));
+                    cursor.normal.background = TextureColor(options.Palette.Cursor);
                     return cursor;
                 }
 
@@ -723,8 +786,8 @@ namespace Joshcamas.CodeEditor
                     interpreter = new GUIStyle();
                     ;
                     interpreter.font = FontGUIStyle.font;
-                    interpreter.fontSize = 14;
-                    interpreter.normal.textColor = new Color(255, 255, 255, 1);
+                    interpreter.fontSize = options.FontSize;
+                    interpreter.normal.textColor = options.Palette.DefaultText;
                     return interpreter;
                 }
 
@@ -744,24 +807,27 @@ namespace Joshcamas.CodeEditor
 
             bool IsParameter = word.StartsWith("$");
 
+            bool IsFunction = options.FunctionLookup.Contains(word);
+
             bool IsCodeBlock = word.StartsWith("[[") && word.EndsWith("]]");
 
             bool IsCodeFlag = word.StartsWith("{{") && word.EndsWith("}}");
 
-            return LineComment ? ColorScheme.Gray
-                : IsParameter ? ColorScheme.Pink
+            return LineComment ? options.Palette.Comment
+                : IsParameter ? options.Palette.Parameter
                     //Block Comment
-                : BlockCommentStyle(word) ? ColorScheme.Orange
+                : BlockCommentStyle(word) ? options.Palette.String
                     //Strings
-                : StringStyle(word) ? ColorScheme.Orange
+                : StringStyle(word) ? options.Palette.String
                     //Keywords
-                : KeyWords.Contains(word) ? ColorScheme.Pink
+                : options.KeywordLookup.Contains(word) ? options.Palette.Keyword
+                : IsFunction ? options.Palette.Function
 
-                : IsCodeBlock ? ColorScheme.Green
-                : IsCodeFlag ? ColorScheme.LightGray
-                : IsOperator(word) ? ColorScheme.LightGray
+                : IsCodeBlock ? options.Palette.InlineCode
+                : IsCodeFlag ? options.Palette.Flag
+                : IsOperator(word) ? options.Palette.Operator
                     //Default
-                : ColorScheme.White;
+                : options.Palette.DefaultText;
         }
 
         /// <summary>
