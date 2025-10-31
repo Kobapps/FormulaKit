@@ -35,6 +35,7 @@ namespace FormulaKit.Editor.Tools.Tools
         private GUIStyle _advancedInputStyle;
         private GUIStyle _syntaxHighlightStyle;
         private bool _stylesInitialized;
+        private Texture2D _transparentBackground;
 
         private readonly List<FormulaExample> _examples = new List<FormulaExample>();
         private string _examplesError;
@@ -45,21 +46,32 @@ namespace FormulaKit.Editor.Tools.Tools
 
         private static readonly Regex NumberRegex = new Regex(@"\b\d+(\.\d+)?\b", RegexOptions.Compiled);
         private static readonly Regex KeywordRegex = new Regex(@"\b(let|if|else|elseif|return|true|false)\b", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private static readonly Regex FunctionRegex = new Regex(@"\b(abs|ceil|clamp|cos|floor|lerp|max|min|pow|random|sin|sqrt|tan)\b", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex FunctionRegex = new Regex(@"\b(abs|acos|asin|atan|ceil|clamp|clamp01|cos|exp|floor|lerp|log|max|min|negative|pow|rand|randf|random|round|sign|sin|sqrt|tan)\b", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static readonly Regex OperatorRegex = new Regex(@"[\+\-\*/=<>!&\|\^]+", RegexOptions.Compiled);
 
         private static readonly FunctionSnippet[] FunctionSnippets =
         {
             new FunctionSnippet("abs", "abs(value)", "Returns the absolute value."),
+            new FunctionSnippet("acos", "acos(value)", "Arc cosine in radians."),
+            new FunctionSnippet("asin", "asin(value)", "Arc sine in radians."),
+            new FunctionSnippet("atan", "atan(value)", "Arc tangent in radians."),
             new FunctionSnippet("ceil", "ceil(value)", "Rounds value up to the nearest integer."),
             new FunctionSnippet("clamp", "clamp(value, min, max)", "Clamps value between min and max."),
+            new FunctionSnippet("clamp01", "clamp01(value)", "Clamps value between 0 and 1."),
             new FunctionSnippet("cos", "cos(radians)", "Cosine of the angle in radians."),
+            new FunctionSnippet("exp", "exp(power)", "Euler's number raised to power."),
             new FunctionSnippet("floor", "floor(value)", "Rounds value down to the nearest integer."),
             new FunctionSnippet("lerp", "lerp(a, b, t)", "Linearly interpolates between a and b."),
+            new FunctionSnippet("log", "log(value)", "Natural logarithm."),
             new FunctionSnippet("max", "max(a, b)", "Maximum of a and b."),
             new FunctionSnippet("min", "min(a, b)", "Minimum of a and b."),
+            new FunctionSnippet("negative", "negative(value)", "Negates the value."),
             new FunctionSnippet("pow", "pow(value, power)", "Raises value to power."),
-            new FunctionSnippet("random", "random", "Random float between 0 and 1."),
+            new FunctionSnippet("rand", "rand(maxExclusive)", "Random integer below max."),
+            new FunctionSnippet("randf", "randf(maxExclusive)", "Random float below max."),
+            new FunctionSnippet("random", "random()", "Random float between 0 and 1."),
+            new FunctionSnippet("round", "round(value)", "Rounds to the nearest integer."),
+            new FunctionSnippet("sign", "sign(value)", "Returns the sign of the value."),
             new FunctionSnippet("sin", "sin(radians)", "Sine of the angle in radians."),
             new FunctionSnippet("sqrt", "sqrt(value)", "Square root of value."),
             new FunctionSnippet("tan", "tan(radians)", "Tangent of the angle in radians."),
@@ -80,7 +92,17 @@ namespace FormulaKit.Editor.Tools.Tools
         {
             _tempLoader = new FormulaLoader();
             _tempRunner = new FormulaRunner(_tempLoader);
+            _stylesInitialized = false;
             LoadExamples();
+        }
+
+        private void OnDisable()
+        {
+            if (_transparentBackground != null)
+            {
+                DestroyImmediate(_transparentBackground);
+                _transparentBackground = null;
+            }
         }
         
         private void OnGUI()
@@ -459,10 +481,11 @@ Operators:
   &&  ||  !  (logical)
 
 Functions:
-  sqrt, abs, pow, min, max
-  clamp, lerp, floor, ceil
-  sin, cos, tan
-  random
+  abs, sqrt, pow, min, max, round
+  clamp, clamp01, lerp, floor, ceil
+  sin, cos, tan, asin, acos, atan
+  log, exp, negative, sign
+  rand, randf, random
 
 Examples:
   baseDamage * (1 + strength * 0.1)
@@ -497,11 +520,19 @@ Examples:
 
             GUI.Box(rect, GUIContent.none, EditorStyles.textArea);
 
-            Rect textRect = new Rect(rect.x + 4, rect.y + 4, rect.width - 8, rect.height - 8);
-            GUI.Label(textRect, HighlightFormula(_formulaExpression), _syntaxHighlightStyle);
-
             GUI.SetNextControlName(ExpressionControlName);
-            _formulaExpression = EditorGUI.TextArea(rect, _formulaExpression, _advancedInputStyle);
+            EditorGUI.BeginChangeCheck();
+            string edited = EditorGUI.TextArea(rect, _formulaExpression, _advancedInputStyle);
+            if (EditorGUI.EndChangeCheck())
+            {
+                _formulaExpression = edited;
+            }
+
+            if (Event.current.type == EventType.Repaint)
+            {
+                Rect textRect = new Rect(rect.x + 4, rect.y + 4, rect.width - 8, rect.height - 8);
+                GUI.Label(textRect, HighlightFormula(_formulaExpression), _syntaxHighlightStyle);
+            }
 
             EditorGUILayout.EndScrollView();
         }
@@ -521,15 +552,38 @@ Examples:
                 fontSize = 12
             };
 
+            if (_transparentBackground == null)
+            {
+                _transparentBackground = new Texture2D(1, 1)
+                {
+                    hideFlags = HideFlags.HideAndDontSave
+                };
+                _transparentBackground.SetPixel(0, 0, new Color(0, 0, 0, 0));
+                _transparentBackground.Apply();
+            }
+
             Color transparent = new Color(0, 0, 0, 0);
-            _advancedInputStyle.normal.textColor = transparent;
-            _advancedInputStyle.focused.textColor = transparent;
-            _advancedInputStyle.hover.textColor = transparent;
-            _advancedInputStyle.active.textColor = transparent;
-            _advancedInputStyle.onFocused.textColor = transparent;
-            _advancedInputStyle.onNormal.textColor = transparent;
-            _advancedInputStyle.onHover.textColor = transparent;
-            _advancedInputStyle.onActive.textColor = transparent;
+
+            GUIStyleState[] states =
+            {
+                _advancedInputStyle.normal,
+                _advancedInputStyle.focused,
+                _advancedInputStyle.hover,
+                _advancedInputStyle.active,
+                _advancedInputStyle.onNormal,
+                _advancedInputStyle.onFocused,
+                _advancedInputStyle.onHover,
+                _advancedInputStyle.onActive
+            };
+
+            foreach (var state in states)
+            {
+                state.background = _transparentBackground;
+                state.textColor = transparent;
+            }
+
+            _advancedInputStyle.selectionColor = EditorStyles.textArea.selectionColor;
+            _advancedInputStyle.cursorColor = EditorStyles.textArea.cursorColor;
 
             _syntaxHighlightStyle = new GUIStyle(EditorStyles.textArea)
             {
@@ -597,6 +651,7 @@ Examples:
 
         private void InsertFunctionSnippet(string snippet)
         {
+            EditorGUI.FocusTextInControl(ExpressionControlName);
             GUI.FocusControl(ExpressionControlName);
 
             var editor = (TextEditor)GUIUtility.GetStateObject(typeof(TextEditor), GUIUtility.keyboardControl);
@@ -617,6 +672,7 @@ Examples:
             int newIndex = before.Length + snippet.Length;
             editor.cursorIndex = newIndex;
             editor.selectIndex = newIndex;
+            Repaint();
         }
 
         private void LoadExamples()
@@ -636,37 +692,106 @@ Examples:
                 using (StringReader reader = new StringReader(asset.text))
                 {
                     string line;
-                    while ((line = reader.ReadLine()) != null)
+                    string currentCategory = null;
+                    string currentName = null;
+                    string currentId = null;
+                    List<string> expressionLines = null;
+
+                    void CommitCurrent()
                     {
-                        line = line.Trim();
-                        if (string.IsNullOrEmpty(line) || line.StartsWith("#"))
+                        if (string.IsNullOrEmpty(currentCategory) || string.IsNullOrEmpty(currentName) || string.IsNullOrEmpty(currentId) || expressionLines == null)
                         {
-                            continue;
+                            return;
                         }
 
-                        string[] parts = line.Split('|');
-                        if (parts.Length < 4)
-                        {
-                            continue;
-                        }
-
-                        string expression = string.Join("|", parts.Skip(3));
-                        expression = expression.Replace("\\n", "\n");
+                        string expression = string.Join("\n", expressionLines).TrimEnd();
 
                         _examples.Add(new FormulaExample
                         {
-                            Category = parts[0].Trim(),
-                            Name = parts[1].Trim(),
-                            Id = parts[2].Trim(),
+                            Category = currentCategory,
+                            Name = currentName,
+                            Id = currentId,
                             Expression = expression
                         });
+
+                        currentCategory = null;
+                        currentName = null;
+                        currentId = null;
+                        expressionLines = null;
                     }
+
+                    while ((line = reader.ReadLine()) != null)
+                    {
+                        string rawLine = line.TrimEnd('\r');
+                        string trimmed = rawLine.Trim();
+
+                        if (string.IsNullOrEmpty(trimmed))
+                        {
+                            if (expressionLines != null)
+                            {
+                                expressionLines.Add(string.Empty);
+                            }
+
+                            continue;
+                        }
+
+                        if (TryParseExampleHeader(trimmed, out string category, out string name, out string id))
+                        {
+                            CommitCurrent();
+                            currentCategory = category;
+                            currentName = name;
+                            currentId = id;
+                            expressionLines = new List<string>();
+                            continue;
+                        }
+
+                        if (trimmed.StartsWith("#"))
+                        {
+                            continue;
+                        }
+
+                        if (expressionLines == null)
+                        {
+                            continue;
+                        }
+
+                        expressionLines.Add(rawLine);
+                    }
+
+                    CommitCurrent();
                 }
             }
             catch (Exception e)
             {
                 _examplesError = $"Failed to load examples: {e.Message}";
             }
+        }
+
+        private static bool TryParseExampleHeader(string line, out string category, out string name, out string id)
+        {
+            category = string.Empty;
+            name = string.Empty;
+            id = string.Empty;
+
+            string[] parts = line.Split('|');
+            if (parts.Length != 3)
+            {
+                return false;
+            }
+
+            category = parts[0].Trim();
+            name = parts[1].Trim();
+            id = parts[2].Trim();
+
+            if (string.IsNullOrEmpty(category) || string.IsNullOrEmpty(name) || string.IsNullOrEmpty(id))
+            {
+                category = string.Empty;
+                name = string.Empty;
+                id = string.Empty;
+                return false;
+            }
+
+            return true;
         }
 
         private void ApplyExample(FormulaExample example)
