@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using FormulaKit.Runtime;
+using Unity.CodeEditor;
 using UnityEditor;
 using UnityEngine;
 
