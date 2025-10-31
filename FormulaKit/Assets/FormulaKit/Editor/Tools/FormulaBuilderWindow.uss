@@ -1,0 +1,159 @@
+.formula-window {
+    padding: 12px;
+    gap: 12px;
+    flex-direction: column;
+}
+
+.formula-window__title {
+    unity-font-style: bold;
+    font-size: 18px;
+    align-self: center;
+}
+
+.formula-window__subtitle {
+    color: #aaaaaa;
+    align-self: center;
+}
+
+.section {
+    border-radius: 4px;
+    border-color: #333333;
+    border-width: 1px;
+    border-left-width: 1px;
+    border-right-width: 1px;
+    border-top-width: 1px;
+    border-bottom-width: 1px;
+    padding: 10px;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.section__title {
+    unity-font-style: bold;
+    font-size: 14px;
+}
+
+.section__subtitle {
+    color: #cccccc;
+}
+
+.toolbar {
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+}
+
+.toolbar__spacer {
+    flex-grow: 1;
+}
+
+.editor-host {
+    border-radius: 4px;
+    border-color: #2d2d2d;
+    border-width: 1px;
+    padding: 6px;
+    min-height: 200px;
+}
+
+.inputs {
+    height: 160px;
+    border-color: #333333;
+    border-width: 1px;
+}
+
+.button--primary {
+    background-color: #2a6fce;
+    color: white;
+}
+
+.evaluate-button {
+    height: 32px;
+    background-color: #3a883a;
+    color: white;
+}
+
+.result {
+    height: 40px;
+    align-items: center;
+    justify-content: center;
+    background-color: #1a1a1a;
+    unity-font-style: bold;
+    font-size: 18px;
+    color: #4bdc64;
+}
+
+.status {
+    display: none;
+}
+
+.status--visible {
+    display: flex;
+}
+
+.code-editor {
+    flex-grow: 1;
+    height: 100%;
+}
+
+.code-editor__scroll {
+    background-color: #1e1e1e;
+}
+
+.code-editor__content {
+    flex-direction: row;
+    align-items: stretch;
+}
+
+.code-editor__gutter {
+    min-width: 44px;
+    padding: 6px 4px 6px 4px;
+    background-color: #252526;
+    color: #858585;
+    unity-text-align: upper-right;
+    white-space: pre;
+}
+
+.code-editor__layer {
+    flex-grow: 1;
+    position: relative;
+    min-width: 0;
+}
+
+.code-editor__highlight {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 6px;
+    color: #d4d4d4;
+    white-space: pre;
+}
+
+.code-editor__input {
+    position: relative;
+    padding: 6px;
+}
+
+.code-editor__input > .unity-text-input {
+    white-space: pre;
+}
+
+.input-row {
+    flex-direction: row;
+    align-items: center;
+    padding: 4px 6px;
+    gap: 6px;
+}
+
+.input-row__label {
+    min-width: 120px;
+}
+
+.input-row__field {
+    width: 100px;
+}
+
+.input-row__remove {
+    width: 22px;
+}
