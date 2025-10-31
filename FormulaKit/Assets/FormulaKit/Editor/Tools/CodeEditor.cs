@@ -24,6 +24,14 @@ namespace FormulaKit.Editor.Tools.Tools
         private readonly GUIContent _cursorContent = new GUIContent();
         private string _cachedHighlightSource;
         private string _cachedHighlightResult;
+        private Vector2 _lastScrollPosition = new Vector2(float.MinValue, float.MinValue);
+        private int _lastCursorIndex = -1;
+        private int _lastSelectIndex = -1;
+        private bool _hadFocusLastFrame;
+        private bool _caretVisible = true;
+        private double _nextCaretBlink;
+
+        private const double CaretBlinkInterval = 0.55;
 
         private readonly Color _backgroundColor = new Color(0.13f, 0.13f, 0.13f);
         private readonly Color _lineBackgroundColor = new Color(0.16f, 0.16f, 0.16f);
@@ -59,7 +67,10 @@ namespace FormulaKit.Editor.Tools.Tools
             Rect numberRect = new Rect(0f, 0f, LineNumberWidth, viewRect.height);
             Rect textRect = new Rect(LineNumberWidth, 0f, viewRect.width - LineNumberWidth, viewRect.height);
 
-            scrollPosition = GUI.BeginScrollView(outerRect, scrollPosition, viewRect, true, true);
+            Vector2 newScroll = GUI.BeginScrollView(outerRect, scrollPosition, viewRect, true, true);
+            bool scrollChanged = newScroll != _lastScrollPosition;
+            scrollPosition = newScroll;
+            _lastScrollPosition = newScroll;
 
             EditorGUI.DrawRect(viewRect, _backgroundColor);
             EditorGUI.DrawRect(numberRect, _lineBackgroundColor);
@@ -81,6 +92,53 @@ namespace FormulaKit.Editor.Tools.Tools
                 _cachedHighlightSource = null;
             }
 
+            TextEditor editor = null;
+            bool hasFocus = GUI.GetNameOfFocusedControl() == _controlName;
+            if (hasFocus)
+            {
+                editor = (TextEditor)GUIUtility.GetStateObject(typeof(TextEditor), GUIUtility.keyboardControl);
+                if (editor != null)
+                {
+                    if (editor.cursorIndex != _lastCursorIndex || editor.selectIndex != _lastSelectIndex)
+                    {
+                        _lastCursorIndex = editor.cursorIndex;
+                        _lastSelectIndex = editor.selectIndex;
+                        changed = true;
+                    }
+                }
+
+                double time = EditorApplication.timeSinceStartup;
+                if (!_hadFocusLastFrame)
+                {
+                    _caretVisible = true;
+                    _nextCaretBlink = time + CaretBlinkInterval;
+                    changed = true;
+                }
+                else if (time >= _nextCaretBlink)
+                {
+                    _caretVisible = !_caretVisible;
+                    _nextCaretBlink = time + CaretBlinkInterval;
+                    changed = true;
+                }
+            }
+            else
+            {
+                if (_lastCursorIndex != -1 || _lastSelectIndex != -1)
+                {
+                    _lastCursorIndex = -1;
+                    _lastSelectIndex = -1;
+                    changed = true;
+                }
+
+                if (_hadFocusLastFrame)
+                {
+                    _caretVisible = false;
+                    changed = true;
+                }
+            }
+
+            _hadFocusLastFrame = hasFocus;
+
             GUI.skin.settings.cursorColor = previousCursor;
             GUI.skin.settings.selectionColor = previousSelection;
 
@@ -88,11 +146,10 @@ namespace FormulaKit.Editor.Tools.Tools
             {
                 DrawLineNumbers(numberRect, lineHeight, text);
 
-                TextEditor editor = GUI.GetNameOfFocusedControl() == _controlName
-                    ? (TextEditor)GUIUtility.GetStateObject(typeof(TextEditor), GUIUtility.keyboardControl)
-                    : null;
-
+                Color previousColor = GUI.color;
+                GUI.color = Color.white;
                 GUI.Label(textRect, GetHighlightedText(text), _overlayStyle);
+                GUI.color = previousColor;
 
                 if (editor != null)
                 {
@@ -102,6 +159,11 @@ namespace FormulaKit.Editor.Tools.Tools
             }
 
             GUI.EndScrollView();
+
+            if (scrollChanged)
+            {
+                changed = true;
+            }
 
             return changed;
         }
@@ -339,6 +401,11 @@ namespace FormulaKit.Editor.Tools.Tools
 
         private void DrawCaret(Rect rect, TextEditor editor, float lineHeight)
         {
+            if (!_caretVisible)
+            {
+                return;
+            }
+
             Vector2 cursorPos = _inputStyle.GetCursorPixelPosition(rect, _cursorContent, editor.cursorIndex);
             Rect caretRect = new Rect(rect.x + cursorPos.x, rect.y + cursorPos.y, 1f, lineHeight);
             EditorGUI.DrawRect(caretRect, _caretColor);
