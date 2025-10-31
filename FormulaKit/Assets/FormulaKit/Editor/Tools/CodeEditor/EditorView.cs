@@ -1,6 +1,7 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Linq;
+using System.Text;
 using UnityEditor;
 using UnityEngine;
 using System.Collections.Generic;
@@ -512,6 +513,774 @@ namespace Joshcamas.CodeEditor
         {
             if (RepaintAction != null)
                 RepaintAction();
+        }
+
+    }
+
+
+    /// <summary>
+    /// Syntax HighLight Code
+    /// </summary>
+    public static class ColorScheme  
+    {       
+        /// <summary>
+        /// The color of the background.
+        /// </summary>
+        public static Color32 Background  = new Color32(42, 50, 50, 255);
+
+        /// <summary>
+        /// The background color2.
+        /// </summary>
+        public static Color32 Background2 = new Color32(34, 34, 34, 255);
+
+        /// <summary>
+        /// The background color3.
+        /// </summary>
+        public static Color32 Background3 = new Color32(39, 40, 34, 255);
+
+        /// <summary>
+        /// White Letters
+        /// </summary>
+        public static Color32 White  = new Color32(255, 255, 255, 255);
+
+        /// <summary>               
+        /// Pink Keywords           
+        /// </summary>             
+        public static Color32 Pink   = new Color32(244, 0,   101, 255);
+
+        /// <summary>               
+        /// Molokai Green           
+        /// </summary>             
+        public static Color32 Green  = new Color32(165, 255, 11 , 255);
+
+        /// <summary>
+        /// Orange Strings
+        /// </summary>
+        public static Color32 Orange = new Color32(237, 158, 38, 255);
+
+        /// <summary>
+        /// Comments
+        /// </summary>
+        public static Color32 Gray   = new Color32(120, 120, 120, 255);
+
+        /// <summary>
+        /// Comments
+        /// </summary>
+        public static Color32 LightGray = new Color32(180, 180, 180, 255);
+
+    }
+
+
+    /// <summary>
+    /// Editor view styles.
+    /// </summary>
+    public class EditorViewStyles
+    {
+        private GUIStyle background;
+        private GUIStyle font;
+        private GUIStyle backgroundLines;
+        private GUIStyle numberLines;
+        private GUIStyle highLine;
+        private GUIStyle selection;
+        private GUIStyle cursor;
+        private GUIStyle interpreter;
+        private static readonly char[] OperatorCharacters = "+-*/%<>=!&|^~?:.,()[]{}".ToCharArray();
+
+        /// <summary>
+        /// Python keywords
+        /// </summary>
+        private static string[] KeyWords = new string[]
+        {
+            "False", "None", "True", "and", "as", "assert", "break", "class", "continue", "def", "del", "elif",
+            "else", "except", "finally", "for", "from", "global", "if", "import", "in", "is", "lambda", "nonlocal",
+            "not", "or", "pass", "raise", "return", "try", "while", "with", "yield", "self"
+        };
+
+
+        public bool BlockComment, LineComment, IsString = false;
+
+        private string WhichQuote, triplequotes = string.Empty;
+
+        public GUIStyle Background
+        {
+            get
+            {
+                if (background == null)
+                {
+                    background = new GUIStyle();
+                    background.normal.background = TextureColor(ColorScheme.Background2);
+                    return background;
+                }
+
+                return background;
+            }
+        }
+
+        public GUIStyle FontGUIStyle
+        {
+            get
+            {
+                if (font == null)
+                {
+                    font = new GUIStyle();
+                    //font.font = (Font)AssetDatabase.LoadMainAssetAtPath("Assets/Font/Monaco12.ttf");
+                    font.fontSize = 12;
+                    return font;
+                }
+
+                return font;
+            }
+        }
+
+        public GUIStyle BackgroundLines
+        {
+            get
+            {
+                if (backgroundLines == null)
+                {
+                    backgroundLines = new GUIStyle();
+                    backgroundLines.normal.background = TextureColor(new Color32(15, 15, 15, 255));
+                    return backgroundLines;
+                }
+
+                return backgroundLines;
+            }
+        }
+
+        public GUIStyle NumberLines
+        {
+            get
+            {
+                if (numberLines == null)
+                {
+                    numberLines = new GUIStyle();
+                    numberLines.normal.textColor = Color.white;
+                    numberLines.font = FontGUIStyle.font;
+                    numberLines.alignment = TextAnchor.UpperRight;
+                    numberLines.fontSize = 12;
+                    return numberLines;
+                }
+
+                return numberLines;
+            }
+        }
+
+        public GUIStyle HighLine
+        {
+
+            get
+            {
+                if (highLine == null)
+                {
+                    highLine = new GUIStyle();
+                    highLine.normal.background = TextureColor(new Color32(255, 255, 255, 25));
+                    return highLine;
+                }
+
+                return highLine;
+            }
+        }
+
+        public GUIStyle Selection
+        {
+
+            get
+            {
+                if (selection == null)
+                {
+                    selection = new GUIStyle();
+                    selection.normal.background = TextureColor(new Color32(255, 255, 255, 45));
+                    return selection;
+                }
+
+                return selection;
+            }
+        }
+
+        public GUIStyle Cursor
+        {
+
+            get
+            {
+                if (cursor == null)
+                {
+                    cursor = new GUIStyle();
+                    cursor.normal.background = TextureColor(new Color(255, 255, 255, 0.8f));
+                    return cursor;
+                }
+
+                return cursor;
+            }
+        }
+
+        public GUIStyle Interpreter
+        {
+
+            get
+            {
+                if (interpreter == null)
+                {
+                    interpreter = new GUIStyle();
+                    ;
+                    interpreter.font = FontGUIStyle.font;
+                    interpreter.fontSize = 14;
+                    interpreter.normal.textColor = new Color(255, 255, 255, 1);
+                    return interpreter;
+                }
+
+                return interpreter;
+            }
+        }
+
+        /// <summary>
+        /// Checks the word style.
+        /// </summary>
+        /// <returns>The word style.</returns>
+        /// <param name="word">Word.</param>
+        /// <param name="IsComment">If set to <c>true</c> comment.</param>
+        public Color32 CheckWordStyle(string word)
+        {
+            LineComment = !LineComment ? word.StartsWith("#") : LineComment;
+
+            bool IsParameter = word.StartsWith("$");
+
+            bool IsCodeBlock = word.StartsWith("[[") && word.EndsWith("]]");
+
+            bool IsCodeFlag = word.StartsWith("{{") && word.EndsWith("}}");
+
+            return LineComment ? ColorScheme.Gray
+                : IsParameter ? ColorScheme.Pink
+                    //Block Comment
+                : BlockCommentStyle(word) ? ColorScheme.Orange
+                    //Strings
+                : StringStyle(word) ? ColorScheme.Orange
+                    //Keywords
+                : KeyWords.Contains(word) ? ColorScheme.Pink
+
+                : IsCodeBlock ? ColorScheme.Green
+                : IsCodeFlag ? ColorScheme.LightGray
+                : IsOperator(word) ? ColorScheme.LightGray
+                    //Default
+                : ColorScheme.White;
+        }
+
+        /// <summary>
+        /// Match block of comment e.g.: """ this is a comment in python """
+        /// </summary>
+        /// <returns><c>true</c>, if comment style was blocked, <c>false</c> otherwise.</returns>
+        /// <param name="word">Word.</param>
+        private bool BlockCommentStyle(string word)
+        {
+            if (Regex.IsMatch(word, "([\"'])"))
+            {
+                triplequotes += word;
+
+                if (Regex.IsMatch(triplequotes, "([\"]{3})|([\']{3})"))
+                {
+                    BlockComment = !BlockComment;
+                    triplequotes = string.Empty;
+
+                    return true;
+                }
+
+                return BlockComment;
+            }
+            else
+                //Reset Quotes
+                triplequotes = string.Empty;
+
+            return BlockComment;
+        }
+
+        /// <summary>
+        /// Match a strings quotes e.g.: "this is a string"
+        /// </summary>
+        /// <returns><c>true</c>, if checker was strung, <c>false</c> otherwise.</returns>
+        /// <param name="word">Word.</param>
+        private bool StringStyle(string word)
+        {
+            //Match quotes checker.
+            if (Regex.IsMatch(word, "([\"'])") && !BlockComment)
+            {
+                //Check double quotes or single quotes.
+                IsString = string.IsNullOrEmpty(WhichQuote) ? true : word != WhichQuote;
+
+                //Check if close with the first quotes.  
+                WhichQuote = string.IsNullOrEmpty(WhichQuote) ? word
+                    : !IsString ? string.Empty
+                    : WhichQuote;
+                return true;
+            }
+
+            return IsString;
+        }
+
+        private bool IsOperator(string word)
+        {
+            if (string.IsNullOrEmpty(word))
+            {
+                return false;
+            }
+
+            return word.All(character => OperatorCharacters.Contains(character));
+        }
+
+        /// <summary>
+        /// Resets styles on new line
+        /// </summary>
+        public void ResetLineStyles()
+        {
+            IsString = false;
+            LineComment = false;
+            WhichQuote = string.Empty;
+            triplequotes = string.Empty;
+        }
+
+        /// <summary>
+        /// Applies a color to a texture.
+        /// </summary>
+        /// <returns>The color.</returns>
+        /// <param name="color">Color.</param>
+        private static Texture2D TextureColor(Color color)
+        {
+            Texture2D TextureColor = new Texture2D(1, 1);
+            TextureColor.SetPixels(new Color[] { color });
+            TextureColor.Apply();
+            TextureColor.hideFlags = HideFlags.HideAndDontSave;
+            return TextureColor;
+        }
+    }
+
+
+    [Serializable]
+    public class ScriptEditorBuffer
+    {
+        /// <summary>
+        /// Current Number Line
+        /// </summary>
+        public int Line;
+
+        /// <summary>
+        /// Current Number Column;
+        /// </summary>
+        public int Column;
+
+        /// <summary>
+        /// Current Number Column Index
+        /// </summary>
+        public int ColumnIndex;
+
+        /// <summary>
+        /// The total lines.
+        /// </summary>
+        public int TotalLines = 1;
+
+        /// <summary>
+        /// List with all lines and all words
+        /// </summary>
+        public List<List<string>> Lines = new List<List<string>>();
+
+        public string CodeBuffer = string.Empty;
+        public string CurrentLine = string.Empty;
+        public string InterpreterBuffer = string.Empty;
+        public string InterpreterBlock = string.Empty;
+
+        public bool InterpreterView;
+        public bool BlockInspector;
+
+        public ScriptEditorBuffer Initialize()
+        {
+            this.Lines = new List<List<string>>();
+            this.CurrentLine = string.Empty;
+            this.CodeBuffer = "import UnityEngine as unity";
+
+            SetColumnIndex();
+
+            return this;
+        }
+
+        public ScriptEditorBuffer Initialize(string expression)
+        {
+            this.Lines = new List<List<string>>();
+            this.CurrentLine = string.Empty;
+            this.CodeBuffer = expression;
+
+            if (this.CodeBuffer == null)
+                this.CodeBuffer = "";
+
+            SetColumnIndex();
+
+            return this;
+        }
+
+        /// <summary>
+        /// Initialize the specified Line and Column.
+        /// </summary>
+        /// <param name="Line">Line.</param>
+        /// <param name="Column">Column.</param>
+        public void Initialize(int Line, int Column)
+        {
+            this.Line = Line;
+            this.Column = Column;
+            this.CurrentLine = GetLine(this.Line);
+            SetColumnIndex();
+        }
+
+        /// <summary>
+        /// Sets the index of the column.
+        /// </summary>
+        public void SetColumnIndex()
+        {
+            Trim();
+
+            ColumnIndex = GetIndexColumn(this.Column, this.CurrentLine);
+
+            ColumnIndex = CurrentLine.Length == 0 ? 0
+            : ColumnIndex > CurrentLine.Length ? CurrentLine.Length
+            : ColumnIndex;
+        }
+
+        /// <summary>
+        /// Gets the index column.
+        /// </summary>
+        /// <returns>The index column.</returns>
+        /// <param name="column">Column.</param>
+        public int GetIndexColumn(int column, string line)
+        {
+            if (column == 0)
+                return 0;
+
+            int index = 0;
+            for (int i = 0; i <= line.Length; i++)
+            {
+
+                if (line.Length > 0)
+                {
+                    index = line[i] == '\t' ? index + 4 : index + 1;
+                    if (index >= column)
+                        return ++i;
+                }
+            }
+
+            return 0;
+        }
+
+        /// <summary>
+        /// Gos up.
+        /// </summary>
+        public void GoUp()
+        {
+            if (Line == 0)
+                return;
+
+            Line--;
+
+            CurrentLine = GetLine(Line);
+
+            SetColumnIndex();
+        }
+
+        /// <summary>
+        /// Gos down.
+        /// </summary>
+        public void GoDown()
+        {
+            Line++;
+
+            CurrentLine = GetLine(Line);
+
+            SetColumnIndex();
+        }
+
+        /// <summary>
+        /// Gos the left.
+        /// </summary>
+        public void GoLeft()
+        {
+
+            if (Column == 0)
+                Line--;
+
+            if (Event.current.command)
+                //Go to begin of line
+                Column = Regex.Match(TabToSpace(CurrentLine), @"\w").Index;
+            else
+            {
+
+                Column = Column > 0 ? Column - 1 : GetLine(Line).Length;
+
+                Column = GetCharIndex(ColumnIndex - 1) == '\t' ? Column - 3 : Column;
+            }
+
+            SetColumnIndex();
+        }
+
+        /// <summary>
+        /// Gos the right.
+        /// </summary>
+        public void GoRight()
+        {
+            if (Event.current.command)
+                //Go to end of line 
+                Column = TabToSpace(CurrentLine).Length;
+            else if (ColumnIndex >= CurrentLine.Length && !InterpreterView)
+            {
+                GoDown();
+                Column = Regex.Match(TabToSpace(CurrentLine), @"\w").Index;
+            }
+            else
+                Column = GetCharIndex(ColumnIndex) == '\t' ? Column + 4 : Column + 1;
+
+            SetColumnIndex();
+        }
+
+        /// <summary>
+        /// Inserts the line.
+        /// </summary>
+        /// <param name="NumberLine">Number line.</param>
+        public void InsertLine(int NumberLine)
+        {
+            this.Lines.Insert(NumberLine, new List<string>());
+        }
+
+        /// <summary>
+        /// Inserts the text.
+        /// </summary>
+        /// <param name="c">char</param>
+        public void InsertText(char c)
+        {
+            string StringJoin = this.CurrentLine;
+
+            //Insert new Line
+            if (c == '\n')
+            {
+
+                string LeftText = string.Empty;
+                string RightText = string.Empty;
+
+                for (int i = 0; i < StringJoin.Length; i++)
+                {
+                    if (i >= this.ColumnIndex)
+                        RightText += StringJoin[i];
+                    else
+                        LeftText += StringJoin[i];
+                }
+
+                Match spaces = Regex.Match(LeftText, @"(^\t+)|(^\s+)");
+
+                RightText = RightText.Insert(0, spaces.Value);
+
+                UpdateLineText(Line, LeftText);
+
+                InsertLine(Line);
+
+                UpdateLineText(++Line, RightText);
+
+                TotalLines++;
+
+                //Jump cursor after indentation.
+                Match Indentation = Regex.Match(TabToSpace(LeftText), @"\w");
+                Column = Indentation.Success ? Indentation.Index : Column;
+                SetColumnIndex();
+
+            }
+            else
+            {
+
+                //Insert a single char          
+                string newChar = (c.ToString());
+
+                StringJoin = StringJoin.Insert(ColumnIndex, newChar);
+
+                UpdateLineText(Line, StringJoin);
+
+                Column = c == '\t' ? Column + 4 : ++Column;
+                SetColumnIndex();
+            }
+        }
+
+        /// <summary>
+        /// Inserts the text interpreter.
+        /// </summary>
+        /// <param name="c">char</param>
+        public void InsertTextInterpreter(char c)
+        {
+            CurrentLine = CurrentLine.Insert(ColumnIndex, c.ToString());
+            Column = c == '\t' ? Column + 4 : ++Column;
+            SetColumnIndex();
+        }
+
+        /// <summary>
+        /// Appends the interpreter.
+        /// </summary>
+        /// <param name="output">Output string</param>
+        public void AppendInterpreter(string output)
+        {
+            StringBuilder sb = new StringBuilder("\n" + InterpreterBuffer);
+            string blockSeparator = this.BlockInspector ? "..." : ">>> ";
+            string BreakLine = String.IsNullOrEmpty(output) ? "" : "\n";
+            sb.Insert(0, output + BreakLine + blockSeparator + CurrentLine);
+
+            InterpreterBuffer = sb.ToString();
+            CurrentLine = string.Empty;
+            SetColumnIndex();
+        }
+
+        /// <summary>
+        /// Remove one char from line
+        /// </summary>
+        public void RemoveText()
+        {
+            if (!ElementInList(Line) && !InterpreterView)
+                return;
+
+            if (Column > 0)
+            {
+                //Remove single char.
+                GoLeft();
+                string LineTab = CurrentLine;
+
+                LineTab = LineTab.Remove(Math.Max(0, ColumnIndex), 1);
+                UpdateLineText(Line, LineTab);
+
+            }
+            else if (!InterpreterView && Line != 1)
+            {
+                //Remove line.
+                Lines[Line - 2].Add(CurrentLine);
+
+                Lines.RemoveAt(Line - 1);
+                GoUp();
+
+                Column = GetLine(Line - 1).IndexOf(CurrentLine);
+                SetColumnIndex();
+            }
+        }
+
+        /// <summary>
+        /// Removes the range of text
+        /// </summary>
+        public void RemoveRange(int[] range)
+        {
+            CurrentLine = (CurrentLine).Remove(range[0], range[1] - range[0]);
+
+            UpdateLineText(Line, CurrentLine);
+
+            Column = range[0] + Regex.Matches(CurrentLine.Substring(0, range[0]), @"(\t)").Count * 3;
+            SetColumnIndex();
+        }
+
+        /// <summary>
+        /// Updates the line text.
+        /// </summary>
+        /// <param name="LineNumber">Line number.</param>
+        /// <param name="LineText">Line text.</param>
+        private void UpdateLineText(int NumberLine, string LineText)
+        {
+            if (InterpreterView)
+            {
+                CurrentLine = LineText;
+                return;
+            }
+
+            if (!ElementInList(NumberLine))
+                return;
+
+            Lines[NumberLine - 1] = new List<string>();
+
+            foreach (Match results in Regex.Matches(LineText, @"(\t)|(\w+)|(\s+)|(.)"))
+                Lines[NumberLine - 1].Add(results.Value);
+
+            CurrentLine = LineText;
+        }
+
+        /// <summary>
+        /// Saves the code to memory.
+        /// </summary>
+        public void SaveCodeToBuffer()
+        {
+            StringBuilder text = new StringBuilder();
+
+            foreach (List<String> Line in Lines)
+            {
+                foreach (string word in Line)
+                    text.Append(word);
+
+                text.AppendLine();
+            }
+
+            CodeBuffer = text.ToString();
+        }
+
+        /// <summary>
+        /// Gets the index of the char.
+        /// </summary>
+        /// <returns>The char index.</returns>
+        /// <param name="index">Index.</param>
+        public char GetCharIndex(int index)
+        {
+            return CurrentLine.ElementAtOrDefault(index);
+        }
+
+        /// <summary>
+        /// Gets the line.
+        /// </summary>
+        /// <returns>The line.</returns>
+        /// <param name="NumberLine">Number line.</param>
+        public string GetLine(int NumberLine)
+        {
+            if (!ElementInList(NumberLine))
+                return string.Empty;
+
+            return string.Join("", Lines[NumberLine - 1].ToArray());
+        }
+
+        /// <summary>
+        /// Elements the in list.
+        /// </summary>
+        /// <returns><c>true</c>, if in list was elemented, <c>false</c> otherwise.</returns>
+        /// <param name="NumberLine">Number line.</param>
+        private bool ElementInList(int NumberLine)
+        {
+            return this.Lines.ElementAtOrDefault(NumberLine - 1) != null;
+        }
+
+        /// <summary>
+        /// Limit Column of Cursor
+        /// </summary>
+        /// <param name="Position">Column and Line position.</param>
+        public void Trim()
+        {
+            string line = CurrentLine.Replace("\t", "    ");
+
+            if (!InterpreterView)
+            {
+                Line = Line >= TotalLines ? TotalLines - 1 : Line;
+
+                Column = Column > line.Length ? line.Length : Column;
+
+            }
+            else
+                Column = Column > line.Length ? CurrentLine.Length : Column;
+
+        }
+
+        /// <summary>
+        /// Replace Tabs to whitespaces
+        /// </summary>
+        /// <param name="value">Value.</param>
+        private string TabToSpace(string value)
+        {
+            return value.Replace("\t", "    ");
+        }
+
+        /// <summary>
+        /// String Class representation
+        /// </summary>
+        /// <returns>string represented the current instance</returns>
+        public override string ToString()
+        {
+            return string.Format("Line: {0}, Column: {1}, ColumnIndex: {2}, CurrentLine: {3}, TotalLine: {4}", Line, Column, ColumnIndex, CurrentLine, TotalLines);
         }
 
     }
