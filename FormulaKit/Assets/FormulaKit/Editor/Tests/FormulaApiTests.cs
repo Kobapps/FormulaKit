@@ -134,7 +134,8 @@ normalized";
             const string expression = @"
 let normalizedChance = clamp01(criticalChance);
 let baseValue = (primaryDamage + secondaryDamage * 0.5) / (normalizedChance + 0.1);
-let penalty = if (resistance > 0.5) { resistance * 2 } else { resistance * 0.75 };
+let penalty = 0;
+if (resistance > 0.5) { penalty = resistance * 2; } else { penalty = resistance * 0.75; }
 let total = baseValue;
 total += min(penalty, 5);
 total -= sign(total - target) * 1.25;
