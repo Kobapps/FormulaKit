@@ -71,31 +71,31 @@ namespace FormulaKit.Runtime
 
             Dictionary<string, float> inputDict;
 
-            // Use pooling if enabled
-            if (_useInputPooling && _inputPools.TryGetValue(formulaId, out var pooledDict))
+            if (_useInputPooling)
             {
-                inputDict = pooledDict;
-                
-                // Update values
-                foreach (var input in inputs)
+                if (!_inputPools.TryGetValue(formulaId, out inputDict))
                 {
-                    inputDict[input.key] = input.value;
+                    inputDict = new Dictionary<string, float>(formula.RequiredInputs.Count);
+                    _inputPools[formulaId] = inputDict;
+                }
+                else
+                {
+                    inputDict.Clear();
+                }
+
+                foreach (var requiredInput in formula.RequiredInputs)
+                {
+                    inputDict[requiredInput] = 0f;
                 }
             }
             else
             {
-                // Create new dictionary
-                inputDict = new Dictionary<string, float>();
-                foreach (var input in inputs)
-                {
-                    inputDict[input.key] = input.value;
-                }
+                inputDict = new Dictionary<string, float>(inputs.Length);
+            }
 
-                // Cache for future use if pooling enabled
-                if (_useInputPooling)
-                {
-                    _inputPools[formulaId] = inputDict;
-                }
+            foreach (var input in inputs)
+            {
+                inputDict[input.key] = input.value;
             }
 
             try
