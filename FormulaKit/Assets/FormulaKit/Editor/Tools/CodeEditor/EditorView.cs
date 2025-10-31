@@ -53,11 +53,20 @@ namespace Joshcamas.CodeEditor
         /// </summary>
         public void OnEnable(string rawScript)
         {
-            
+
             if (buffer == null)
                 buffer = new ScriptEditorBuffer();
 
-            buffer.Initialize(rawScript);
+            buffer.Initialize(rawScript ?? string.Empty);
+            buffer.Line = 1;
+            buffer.Column = 0;
+            buffer.CurrentLine = buffer.GetLine(buffer.Line);
+            buffer.SetColumnIndex();
+            buffer.TotalLines = Mathf.Max(1, buffer.TotalLines);
+            PositionScroll = Vector2.zero;
+            highLightSelections = null;
+            isSelection = false;
+            Focused = false;
         }
 
         /// <summary>
@@ -65,11 +74,12 @@ namespace Joshcamas.CodeEditor
         /// </summary>
         public void EditorViewGUI()
         {
+            FocusControl();
             //Get box rect and background
             GetBoxRect();
             //Begin ScrollView of box
             PositionScroll = GUI.BeginScrollView(new Rect(0, LayoutRect.y, LayoutRect.width + 15, LayoutRect.height),
-                    PositionScroll, new Rect(0, LayoutRect.yMin, LayoutRect.xMax, 23 * buffer.TotalLines));
+                    PositionScroll, new Rect(0, LayoutRect.yMin, LayoutRect.xMax, Mathf.Max(LayoutRect.height, 23 * buffer.TotalLines)));
             //Draw Line Numbers.
             EventRepainted();
             //Draw Cursor for text
@@ -83,6 +93,36 @@ namespace Joshcamas.CodeEditor
 
             //KeyBoard Events
             KeyBoardController();
+        }
+
+        public string GetText()
+        {
+            return buffer != null ? buffer.CodeBuffer : string.Empty;
+        }
+
+        public void InsertText(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+                return;
+
+            if (buffer == null)
+                OnEnable(string.Empty);
+
+            foreach (char character in text)
+            {
+                if (character == '\r')
+                    continue;
+
+                buffer.InsertText(character);
+            }
+
+            buffer.SaveCodeToBuffer();
+            Repaint();
+        }
+
+        public void RequestFocus()
+        {
+            Focused = true;
         }
 
         /// <summary>

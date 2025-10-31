@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using FormulaKit.Runtime;
-using Unity.CodeEditor;
+using Joshcamas.CodeEditor;
 using UnityEditor;
 using UnityEngine;
 
@@ -30,7 +30,8 @@ namespace FormulaKit.Editor.Tools.Tools
         private MessageType _statusType = MessageType.None;
         private string _examplesError;
 
-        private CodeEditor _codeEditor;
+        private EditorView _editorView;
+        private bool _editorViewDirty = true;
 
         private static readonly Regex NumberRegex = new Regex(@"\b\d+(\.\d+)?\b", RegexOptions.Compiled);
         private static readonly Regex KeywordRegex = new Regex(@"\b(let|if|else|elseif|return|true|false)\b", RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -77,20 +78,44 @@ namespace FormulaKit.Editor.Tools.Tools
         {
             _tempLoader = new FormulaLoader();
             _tempRunner = new FormulaRunner(_tempLoader);
-            _codeEditor = new CodeEditor("FormulaBuilder.AdvancedEditor")
-            {
-                Text = _formulaExpression,
-                Highlighter = HighlightFormula
-            };
-            _codeEditor.TextChanged += OnAdvancedTextChanged;
+            InitializeEditorView();
             LoadExamples();
+        }
+
+        private void InitializeEditorView()
+        {
+            if (_editorView != null)
+            {
+                _editorView.RepaintAction -= Repaint;
+            }
+
+            _editorView = new EditorView();
+            _editorView.RepaintAction += Repaint;
+            _editorView.OnEnable(_formulaExpression ?? string.Empty);
+            _editorViewDirty = false;
+        }
+
+        private void EnsureEditorViewInitialized()
+        {
+            if (_editorView == null)
+            {
+                InitializeEditorView();
+                return;
+            }
+
+            if (_editorViewDirty)
+            {
+                _editorView.OnEnable(_formulaExpression ?? string.Empty);
+                _editorViewDirty = false;
+            }
         }
 
         private void OnDisable()
         {
-            if (_codeEditor != null)
+            if (_editorView != null)
             {
-                _codeEditor.TextChanged -= OnAdvancedTextChanged;
+                _editorView.RepaintAction -= Repaint;
+                _editorView = null;
             }
 
             _tempLoader = null;
@@ -99,16 +124,6 @@ namespace FormulaKit.Editor.Tools.Tools
 
         private void OnGUI()
         {
-            if (_codeEditor == null)
-            {
-                _codeEditor = new CodeEditor("FormulaBuilder.AdvancedEditor")
-                {
-                    Text = _formulaExpression,
-                    Highlighter = HighlightFormula
-                };
-                _codeEditor.TextChanged += OnAdvancedTextChanged;
-            }
-
             GUILayout.Space(8f);
             DrawHeader();
             GUILayout.Space(8f);
@@ -157,8 +172,9 @@ namespace FormulaKit.Editor.Tools.Tools
                     _advancedMode = newAdvanced;
                     if (_advancedMode)
                     {
-                        _codeEditor.Text = _formulaExpression;
-                        _codeEditor.RequestFocus();
+                        _editorViewDirty = true;
+                        EnsureEditorViewInitialized();
+                        _editorView.RequestFocus();
                     }
                 }
 
@@ -191,9 +207,9 @@ namespace FormulaKit.Editor.Tools.Tools
 
                 if (_advancedMode)
                 {
-                    Rect editorRect = GUILayoutUtility.GetRect(GUIContent.none, GUIStyle.none, GUILayout.Height(220f), GUILayout.ExpandHeight(true));
-                    _codeEditor.Text = _formulaExpression;
-                    _codeEditor.OnGUI(editorRect);
+                    EnsureEditorViewInitialized();
+                    _editorView.EditorViewGUI();
+                    _formulaExpression = _editorView.GetText();
                 }
                 else
                 {
@@ -202,6 +218,7 @@ namespace FormulaKit.Editor.Tools.Tools
                     if (EditorGUI.EndChangeCheck())
                     {
                         _formulaExpression = updated;
+                        _editorViewDirty = true;
                     }
                 }
 
@@ -304,11 +321,6 @@ namespace FormulaKit.Editor.Tools.Tools
             }
         }
 
-        private void OnAdvancedTextChanged(string text)
-        {
-            _formulaExpression = text;
-        }
-
         private void ApplyRandomValues()
         {
             string[] keys = _testInputs.Keys.ToArray();
@@ -406,8 +418,12 @@ namespace FormulaKit.Editor.Tools.Tools
         {
             _formulaId = example.Id;
             _formulaExpression = example.Expression;
-            _codeEditor.Text = _formulaExpression;
-            _codeEditor.RequestFocus();
+            _editorViewDirty = true;
+            if (_advancedMode)
+            {
+                EnsureEditorViewInitialized();
+                _editorView.RequestFocus();
+            }
             AutoDetectInputs();
         }
 
@@ -424,15 +440,18 @@ namespace FormulaKit.Editor.Tools.Tools
 
         private void InsertFunctionSnippet(FunctionSnippet snippet)
         {
-            if (_advancedMode && _codeEditor != null)
+            if (_advancedMode && _editorView != null)
             {
-                _codeEditor.InsertText(snippet.Snippet);
+                EnsureEditorViewInitialized();
+                _editorView.InsertText(snippet.Snippet);
+                _formulaExpression = _editorView.GetText();
             }
             else
             {
                 string current = _formulaExpression ?? string.Empty;
                 current += (current.Length > 0 ? "\n" : string.Empty) + snippet.Snippet;
                 _formulaExpression = current;
+                _editorViewDirty = true;
             }
         }
 
