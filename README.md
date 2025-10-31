@@ -23,7 +23,7 @@ Replace `<your-org>` with the account hosting this repository and adjust the tag
 
 ## Local development
 
-When working inside this repository, open the `FormulaKit/FormulaKit` Unity project folder in the Unity Editor. Unity will import the package via the relative file reference defined in `Packages/manifest.json`, allowing you to iterate on the package while running the sample scenes.
+When working inside this repository, open the `FormulaKit` Unity project folder in the Unity Editor. Unity will import the package via the relative file reference defined in `Packages/manifest.json` (`"file:../../Packages/com.barnaff.formulakit"`), allowing you to iterate on the package while running the sample scenes.
 
 ## License
 

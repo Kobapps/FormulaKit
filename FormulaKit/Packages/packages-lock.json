@@ -476,7 +476,7 @@
       }
     },
     "com.barnaff.formulakit": {
-      "version": "file:../Packages/com.barnaff.formulakit",
+      "version": "file:../../Packages/com.barnaff.formulakit",
       "depth": 0,
       "source": "local",
       "dependencies": {}
