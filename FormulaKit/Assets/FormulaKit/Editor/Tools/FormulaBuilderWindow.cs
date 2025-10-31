@@ -239,18 +239,6 @@ namespace FormulaKit.Editor.Tools.Tools
             EditorGUILayout.BeginVertical("box");
             EditorGUILayout.BeginHorizontal();
             
-            // Save to manager
-            if (GUILayout.Button("💾 Save to Manager", GUILayout.Height(30)))
-            {
-                SaveToManager();
-            }
-            
-            // Load from manager
-            if (GUILayout.Button("📂 Load from Manager", GUILayout.Height(30)))
-            {
-                LoadFromManager();
-            }
-            
             EditorGUILayout.EndHorizontal();
             
             GUILayout.Space(5);
@@ -264,12 +252,6 @@ namespace FormulaKit.Editor.Tools.Tools
                 {
                     ClearAll();
                 }
-            }
-            
-            // View library
-            if (GUILayout.Button("📚 View Library", GUILayout.Height(30)))
-            {
-                FormulaLibraryWindow.ShowWindow();
             }
             
             EditorGUILayout.EndHorizontal();
@@ -352,85 +334,6 @@ namespace FormulaKit.Editor.Tools.Tools
             }
         }
         
-        private void SaveToManager()
-        {
-            if (!Application.isPlaying)
-            {
-                ShowStatus("⚠️ Enter Play Mode to save to FormulaManager", MessageType.Warning);
-                return;
-            }
-            
-            if (string.IsNullOrEmpty(_formulaId) || string.IsNullOrEmpty(_formulaExpression))
-            {
-                ShowStatus("Enter formula ID and expression first", MessageType.Warning);
-                return;
-            }
-            
-            if (FormulaManager.Instance == null)
-            {
-                ShowStatus("❌ FormulaManager not found in scene", MessageType.Error);
-                return;
-            }
-            
-            bool success = FormulaManager.Instance.RegisterFormula(_formulaId, _formulaExpression);
-            
-            if (success)
-            {
-                ShowStatus($"✓ Formula '{_formulaId}' saved to FormulaManager!", MessageType.Info);
-            }
-            else
-            {
-                ShowStatus("❌ Failed to save formula", MessageType.Error);
-            }
-        }
-        
-        private void LoadFromManager()
-        {
-            if (!Application.isPlaying)
-            {
-                ShowStatus("⚠️ Enter Play Mode to load from FormulaManager", MessageType.Warning);
-                return;
-            }
-            
-            if (FormulaManager.Instance == null)
-            {
-                ShowStatus("❌ FormulaManager not found in scene", MessageType.Error);
-                return;
-            }
-            
-            var allIds = FormulaManager.Instance.GetAllFormulaIds().ToList();
-            
-            if (allIds.Count == 0)
-            {
-                ShowStatus("No formulas in FormulaManager", MessageType.Info);
-                return;
-            }
-            
-            // Show selection menu
-            GenericMenu menu = new GenericMenu();
-            
-            foreach (var id in allIds)
-            {
-                menu.AddItem(new GUIContent(id), false, () => LoadFormula(id));
-            }
-            
-            menu.ShowAsContext();
-        }
-        
-        private void LoadFormula(string id)
-        {
-            var formula = FormulaManager.Instance.GetFormula(id);
-            
-            if (formula != null)
-            {
-                _formulaId = id;
-                _formulaExpression = formula.Expression;
-                
-                AutoDetectInputs();
-                
-                ShowStatus($"✓ Loaded formula '{id}'", MessageType.Info);
-            }
-        }
         
         private void ClearAll()
         {
@@ -550,143 +453,6 @@ Examples:
   pow(level, 1.5)";
             
             EditorUtility.DisplayDialog("Syntax Help", help, "OK");
-        }
-    }
-    
-    // ============== LIBRARY WINDOW ==============
-    
-    /// <summary>
-    /// Simple formula library viewer
-    /// </summary>
-    public class FormulaLibraryWindow : EditorWindow
-    {
-        private Vector2 scrollPos;
-        private string searchFilter = "";
-        
-        public static void ShowWindow()
-        {
-            var window = GetWindow<FormulaLibraryWindow>("Formula Library");
-            window.minSize = new Vector2(400, 500);
-            window.Show();
-        }
-        
-        private void OnGUI()
-        {
-            GUILayout.Space(10);
-            
-            EditorGUILayout.LabelField("Formula Library", EditorStyles.boldLabel);
-            
-            GUILayout.Space(5);
-            
-            // Search
-            EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField("Search:", GUILayout.Width(60));
-            searchFilter = EditorGUILayout.TextField(searchFilter);
-            EditorGUILayout.EndHorizontal();
-            
-            GUILayout.Space(10);
-            
-            if (!Application.isPlaying || FormulaManager.Instance == null)
-            {
-                EditorGUILayout.HelpBox("Enter Play Mode to view formulas from FormulaManager", MessageType.Info);
-                return;
-            }
-            
-            // Formula list
-            var allIds = FormulaManager.Instance.GetAllFormulaIds().ToList();
-            var filteredIds = string.IsNullOrEmpty(searchFilter)
-                ? allIds
-                : allIds.Where(id => id.ToLower().Contains(searchFilter.ToLower())).ToList();
-            
-            EditorGUILayout.LabelField($"Formulas ({filteredIds.Count}):", EditorStyles.miniBoldLabel);
-            
-            scrollPos = EditorGUILayout.BeginScrollView(scrollPos);
-            
-            foreach (var id in filteredIds)
-            {
-                EditorGUILayout.BeginVertical("box");
-                
-                EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.LabelField(id, EditorStyles.boldLabel);
-                
-                if (GUILayout.Button("Edit", GUILayout.Width(60)))
-                {
-                    LoadIntoBuilder(id);
-                }
-                
-                if (GUILayout.Button("×", GUILayout.Width(30)))
-                {
-                    if (EditorUtility.DisplayDialog("Delete", $"Delete '{id}'?", "Yes", "No"))
-                    {
-                        FormulaManager.Instance.RemoveFormula(id);
-                        GUIUtility.ExitGUI();
-                    }
-                }
-                
-                EditorGUILayout.EndHorizontal();
-                
-                // Show expression preview
-                var formula = FormulaManager.Instance.GetFormula(id);
-                if (formula != null)
-                {
-                    var preview = formula.Expression.Length > 100
-                        ? formula.Expression.Substring(0, 100) + "..."
-                        : formula.Expression;
-                    
-                    EditorGUILayout.LabelField(preview, EditorStyles.wordWrappedMiniLabel);
-                }
-                
-                EditorGUILayout.EndVertical();
-                GUILayout.Space(5);
-            }
-            
-            EditorGUILayout.EndScrollView();
-            
-            GUILayout.Space(10);
-            
-            // Actions
-            EditorGUILayout.BeginHorizontal();
-            
-            if (GUILayout.Button("Import JSON", GUILayout.Height(30)))
-            {
-                ImportJSON();
-            }
-            
-            if (GUILayout.Button("Export JSON", GUILayout.Height(30)))
-            {
-                ExportJSON();
-            }
-            
-            EditorGUILayout.EndHorizontal();
-        }
-        
-        private void LoadIntoBuilder(string id)
-        {
-            var builder = GetWindow<FormulaBuilderWindow>("Formula Builder");
-            builder.Focus();
-            
-           
-        }
-        
-        private void ImportJSON()
-        {
-            string path = EditorUtility.OpenFilePanel("Import Formulas", "", "json");
-            if (!string.IsNullOrEmpty(path))
-            {
-                int count = FormulaManager.Instance.LoadFormulasFromFile(path);
-                EditorUtility.DisplayDialog("Import", $"Imported {count} formulas", "OK");
-            }
-        }
-        
-        private void ExportJSON()
-        {
-            string path = EditorUtility.SaveFilePanel("Export Formulas", "", "formulas.json", "json");
-            if (!string.IsNullOrEmpty(path))
-            {
-                bool success = FormulaManager.Instance.ExportToFile(path);
-                EditorUtility.DisplayDialog("Export", 
-                    success ? "Export successful!" : "Export failed", "OK");
-            }
         }
     }
 }
