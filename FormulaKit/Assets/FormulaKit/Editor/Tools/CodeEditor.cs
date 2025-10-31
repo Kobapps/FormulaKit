@@ -92,15 +92,11 @@ namespace FormulaKit.Editor.Tools.Tools
                     ? (TextEditor)GUIUtility.GetStateObject(typeof(TextEditor), GUIUtility.keyboardControl)
                     : null;
 
-                if (editor != null)
-                {
-                    DrawSelectionOverlay(textRect, editor, lineHeight);
-                }
-
                 GUI.Label(textRect, GetHighlightedText(text), _overlayStyle);
 
                 if (editor != null)
                 {
+                    DrawSelectionOverlay(textRect, editor, lineHeight);
                     DrawCaret(textRect, editor, lineHeight);
                 }
             }
@@ -138,14 +134,25 @@ namespace FormulaKit.Editor.Tools.Tools
             };
 
             SetAllStateTextColor(_inputStyle, Color.clear);
+            ClearBackgrounds(_inputStyle);
 
-            _overlayStyle = new GUIStyle(_inputStyle)
+            _overlayStyle = new GUIStyle(EditorStyles.label)
             {
                 richText = true,
-                wordWrap = false
+                wordWrap = false,
+                alignment = TextAnchor.UpperLeft,
+                clipping = TextClipping.Overflow,
+                font = _inputStyle.font,
+                fontSize = _inputStyle.fontSize,
+                padding = new RectOffset(
+                    _inputStyle.padding.left,
+                    _inputStyle.padding.right,
+                    _inputStyle.padding.top,
+                    _inputStyle.padding.bottom)
             };
 
             SetAllStateTextColor(_overlayStyle, EditorStyles.textField.normal.textColor);
+            ClearBackgrounds(_overlayStyle);
 
             _lineNumberStyle = new GUIStyle(EditorStyles.miniLabel)
             {
@@ -175,6 +182,27 @@ namespace FormulaKit.Editor.Tools.Tools
             foreach (GUIStyleState state in states)
             {
                 state.textColor = color;
+            }
+        }
+
+        private static void ClearBackgrounds(GUIStyle style)
+        {
+            GUIStyleState[] states =
+            {
+                style.normal,
+                style.focused,
+                style.hover,
+                style.active,
+                style.onNormal,
+                style.onFocused,
+                style.onHover,
+                style.onActive
+            };
+
+            foreach (GUIStyleState state in states)
+            {
+                state.background = null;
+                state.scaledBackgrounds = null;
             }
         }
 
