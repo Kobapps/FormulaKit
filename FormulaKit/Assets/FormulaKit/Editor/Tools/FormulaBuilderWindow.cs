@@ -32,10 +32,7 @@ namespace FormulaKit.Editor.Tools.Tools
         private Vector2 _inputsScroll;
 
         // Editor helpers
-        private GUIStyle _advancedInputStyle;
-        private GUIStyle _syntaxHighlightStyle;
-        private bool _stylesInitialized;
-        private Texture2D _transparentBackground;
+        private CodeEditor _codeEditor;
 
         private readonly List<FormulaExample> _examples = new List<FormulaExample>();
         private string _examplesError;
@@ -92,17 +89,14 @@ namespace FormulaKit.Editor.Tools.Tools
         {
             _tempLoader = new FormulaLoader();
             _tempRunner = new FormulaRunner(_tempLoader);
-            _stylesInitialized = false;
+            _codeEditor = null;
             LoadExamples();
         }
 
         private void OnDisable()
         {
-            if (_transparentBackground != null)
-            {
-                DestroyImmediate(_transparentBackground);
-                _transparentBackground = null;
-            }
+            _codeEditor?.Dispose();
+            _codeEditor = null;
         }
         
         private void OnGUI()
@@ -512,195 +506,15 @@ Examples:
 
         private void DrawAdvancedExpressionField()
         {
-            EnsureStyles();
-            _expressionScroll = EditorGUILayout.BeginScrollView(_expressionScroll, GUILayout.Height(160));
-
-            Rect rect = GUILayoutUtility.GetRect(0, 1000, 0, 1000, _syntaxHighlightStyle, GUILayout.ExpandHeight(true));
-            rect.height = Mathf.Max(rect.height, 140f);
-
-            GUI.Box(rect, GUIContent.none, EditorStyles.textArea);
-
-            GUI.SetNextControlName(ExpressionControlName);
-            EditorGUI.BeginChangeCheck();
-            string edited = EditorGUI.TextArea(rect, _formulaExpression, _advancedInputStyle);
-            if (EditorGUI.EndChangeCheck())
+            if (_codeEditor == null)
             {
-                _formulaExpression = edited;
+                _codeEditor = new CodeEditor(ExpressionControlName, HighlightFormula);
             }
 
-            TextEditor editor = null;
-            if (GUI.GetNameOfFocusedControl() == ExpressionControlName)
+            if (_codeEditor.Draw(ref _formulaExpression, ref _expressionScroll, 180f))
             {
-                editor = (TextEditor)GUIUtility.GetStateObject(typeof(TextEditor), GUIUtility.keyboardControl);
+                Repaint();
             }
-
-            if (Event.current.type == EventType.Repaint)
-            {
-                if (editor != null)
-                {
-                    DrawSelectionOverlay(rect, editor);
-                }
-
-                GUI.Label(rect, HighlightFormula(_formulaExpression), _syntaxHighlightStyle);
-
-                if (editor != null)
-                {
-                    DrawCaret(rect, editor);
-                }
-            }
-
-            EditorGUILayout.EndScrollView();
-        }
-
-        private void EnsureStyles()
-        {
-            if (_stylesInitialized)
-            {
-                return;
-            }
-
-            _stylesInitialized = true;
-
-            _advancedInputStyle = new GUIStyle(EditorStyles.textArea)
-            {
-                wordWrap = true,
-                fontSize = 12
-            };
-
-            if (_transparentBackground == null)
-            {
-                _transparentBackground = new Texture2D(1, 1)
-                {
-                    hideFlags = HideFlags.HideAndDontSave
-                };
-                _transparentBackground.SetPixel(0, 0, new Color(0, 0, 0, 0));
-                _transparentBackground.Apply();
-            }
-
-            Color transparent = new Color(0, 0, 0, 0);
-
-            GUIStyleState[] states =
-            {
-                _advancedInputStyle.normal,
-                _advancedInputStyle.focused,
-                _advancedInputStyle.hover,
-                _advancedInputStyle.active,
-                _advancedInputStyle.onNormal,
-                _advancedInputStyle.onFocused,
-                _advancedInputStyle.onHover,
-                _advancedInputStyle.onActive
-            };
-
-            foreach (var state in states)
-            {
-                state.background = _transparentBackground;
-                state.textColor = transparent;
-            }
-
-            _syntaxHighlightStyle = new GUIStyle(EditorStyles.label)
-            {
-                wordWrap = true,
-                fontSize = 12,
-                richText = true,
-                clipping = TextClipping.Clip,
-                alignment = TextAnchor.UpperLeft,
-                padding = new RectOffset(_advancedInputStyle.padding.left, _advancedInputStyle.padding.right,
-                    _advancedInputStyle.padding.top, _advancedInputStyle.padding.bottom)
-            };
-
-            Color textColor = EditorStyles.textField.normal.textColor;
-            GUIStyleState[] syntaxStates =
-            {
-                _syntaxHighlightStyle.normal,
-                _syntaxHighlightStyle.hover,
-                _syntaxHighlightStyle.active,
-                _syntaxHighlightStyle.focused,
-                _syntaxHighlightStyle.onNormal,
-                _syntaxHighlightStyle.onHover,
-                _syntaxHighlightStyle.onActive,
-                _syntaxHighlightStyle.onFocused
-            };
-
-            foreach (var state in syntaxStates)
-            {
-                state.textColor = textColor;
-            }
-        }
-
-        private void DrawSelectionOverlay(Rect rect, TextEditor editor)
-        {
-            if (editor.cursorIndex == editor.selectIndex)
-            {
-                return;
-            }
-
-            int start = Mathf.Min(editor.cursorIndex, editor.selectIndex);
-            int end = Mathf.Max(editor.cursorIndex, editor.selectIndex);
-
-            if (start == end)
-            {
-                return;
-            }
-
-            GUIContent content = new GUIContent(_formulaExpression);
-            Vector2 startPos = _advancedInputStyle.GetCursorPixelPosition(rect, content, start);
-            Vector2 endPos = _advancedInputStyle.GetCursorPixelPosition(rect, content, end);
-
-            float lineHeight = _advancedInputStyle.lineHeight > 0f
-                ? _advancedInputStyle.lineHeight
-                : _advancedInputStyle.CalcSize(new GUIContent("A")).y;
-
-            Color selectionColor = new Color(0.24f, 0.49f, 0.90f, 0.35f);
-
-            float contentStartX = rect.x + _advancedInputStyle.padding.left;
-            float contentEndX = rect.x + rect.width - _advancedInputStyle.padding.right;
-            float contentWidth = Mathf.Max(contentEndX - contentStartX, 0f);
-
-            if (Mathf.Approximately(startPos.y, endPos.y))
-            {
-                float left = Mathf.Min(startPos.x, endPos.x);
-                float width = Mathf.Abs(endPos.x - startPos.x);
-                if (width > 0f)
-                {
-                    Rect selectionRect = new Rect(rect.x + left, rect.y + startPos.y, width, lineHeight);
-                    EditorGUI.DrawRect(selectionRect, selectionColor);
-                }
-                return;
-            }
-
-            // first line
-            float firstWidth = Mathf.Max(contentEndX - (rect.x + startPos.x), 0f);
-            if (firstWidth > 0f)
-            {
-                Rect firstRect = new Rect(rect.x + startPos.x, rect.y + startPos.y, firstWidth, lineHeight);
-                EditorGUI.DrawRect(firstRect, selectionColor);
-            }
-
-            float currentY = startPos.y + lineHeight;
-            while (currentY + 0.1f < endPos.y)
-            {
-                Rect middleRect = new Rect(contentStartX, rect.y + currentY, contentWidth, lineHeight);
-                EditorGUI.DrawRect(middleRect, selectionColor);
-                currentY += lineHeight;
-            }
-
-            float lastWidth = Mathf.Max((rect.x + endPos.x) - contentStartX, 0f);
-            if (lastWidth > 0f)
-            {
-                Rect lastRect = new Rect(contentStartX, rect.y + endPos.y, lastWidth, lineHeight);
-                EditorGUI.DrawRect(lastRect, selectionColor);
-            }
-        }
-
-        private void DrawCaret(Rect rect, TextEditor editor)
-        {
-            Vector2 cursorPos = editor.graphicalCursorPos;
-            float lineHeight = _advancedInputStyle.lineHeight > 0f
-                ? _advancedInputStyle.lineHeight
-                : _advancedInputStyle.CalcSize(new GUIContent("A")).y;
-
-            Rect cursorRect = new Rect(rect.x + cursorPos.x, rect.y + cursorPos.y, 1f, lineHeight);
-            EditorGUI.DrawRect(cursorRect, new Color(0.9f, 0.9f, 0.9f, 0.9f));
         }
 
         private static string HighlightFormula(string text)
@@ -760,7 +574,15 @@ Examples:
 
         private void InsertFunctionSnippet(string snippet)
         {
-            EditorGUI.FocusTextInControl(ExpressionControlName);
+            if (_advancedMode)
+            {
+                _codeEditor?.Focus();
+            }
+            else
+            {
+                EditorGUI.FocusTextInControl(ExpressionControlName);
+            }
+
             GUI.FocusControl(ExpressionControlName);
 
             var editor = (TextEditor)GUIUtility.GetStateObject(typeof(TextEditor), GUIUtility.keyboardControl);
