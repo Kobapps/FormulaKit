@@ -1,11 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using FormulaFramework;
 using FormulaKit.Runtime;
 using UnityEditor;
 using UnityEngine;
 
-namespace FormulaKit.Editor
+namespace FormulaKit.Editor.Tools.Tools
 {
     /// <summary>
     /// Simple and clean formula editor

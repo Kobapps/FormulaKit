@@ -1,9 +1,9 @@
 ﻿using System.Linq;
-using FormulaFramework;
+using FormulaKit.Runtime;
 using UnityEditor;
 using UnityEngine;
 
-namespace FormulaKit.Editor
+namespace FormulaKit.Editor.Tools.Tools
 {
     /// <summary>
     /// Custom inspector for FormulaManager with quick actions

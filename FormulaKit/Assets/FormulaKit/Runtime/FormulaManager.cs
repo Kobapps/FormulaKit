@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using FormulaKit.Runtime;
+using FormulaFramework;
 using UnityEngine;
 using UnityEngine.Networking;
 
-namespace FormulaFramework
+namespace FormulaKit.Runtime
 {
     /// <summary>
     /// Unity adapter for the formula system

@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using FormulaKit.Runtime;
 
-namespace FormulaFramework
+namespace FormulaKit.Runtime
 {
     /// <summary>
     /// Pure C# formula loader - handles formula registration and caching
