@@ -10,10 +10,8 @@ using UnityEngine;
 
 namespace FormulaKit.Editor.Tools.Tools
 {
-    public class FormulaBuilderWindow : EditorWindow
+    public partial class FormulaBuilderWindow : EditorWindow
     {
-        private const string ExamplesAssetPath = "Assets/FormulaKit/Editor/Tools/FormulaExamples.txt";
-
         private readonly Dictionary<string, float> _testInputs = new Dictionary<string, float>();
         private readonly List<FormulaExample> _examples = new List<FormulaExample>();
 
@@ -495,79 +493,15 @@ namespace FormulaKit.Editor.Tools.Tools
             _examples.Clear();
             _examplesError = string.Empty;
 
-            TextAsset asset = AssetDatabase.LoadAssetAtPath<TextAsset>(ExamplesAssetPath);
-            if (asset == null)
+            foreach (var example in GetCompiledExamples())
             {
-                _examplesError = "FormulaExamples.txt not found.";
-                return;
+                _examples.Add(example);
             }
 
-            try
+            if (_examples.Count == 0)
             {
-                string[] lines = asset.text.Replace("\r", string.Empty).Split('\n');
-                int index = 0;
-                while (index < lines.Length)
-                {
-                    string header = lines[index];
-                    index++;
-
-                    if (string.IsNullOrWhiteSpace(header) || header.StartsWith("#"))
-                    {
-                        continue;
-                    }
-
-                    string[] parts = header.Split('|');
-                    if (parts.Length < 3)
-                    {
-                        continue;
-                    }
-
-                    string category = parts[0].Trim();
-                    string name = parts[1].Trim();
-                    string id = parts[2].Trim();
-                    List<string> expressionLines = new List<string>();
-
-                    while (index < lines.Length)
-                    {
-                        string line = lines[index];
-                        if (line.StartsWith("#"))
-                        {
-                            break;
-                        }
-
-                        if (IsHeaderCandidate(line))
-                        {
-                            break;
-                        }
-
-                        expressionLines.Add(line);
-                        index++;
-                    }
-
-                    string expression = string.Join("\n", expressionLines).Trim('\n');
-                    _examples.Add(new FormulaExample(category, name, id, expression));
-                }
+                _examplesError = "No compiled examples available.";
             }
-            catch (Exception ex)
-            {
-                _examplesError = $"Failed to load examples: {ex.Message}";
-            }
-        }
-
-        private static bool IsHeaderCandidate(string line)
-        {
-            if (string.IsNullOrWhiteSpace(line))
-            {
-                return false;
-            }
-
-            string[] parts = line.Split('|');
-            if (parts.Length < 3)
-            {
-                return false;
-            }
-
-            return parts.Take(3).All(part => !string.IsNullOrWhiteSpace(part));
         }
 
         private string GenerateUniqueInputName()

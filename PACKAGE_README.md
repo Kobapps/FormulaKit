@@ -9,7 +9,7 @@ You can install the package from a Git URL by adding the following entry to your
 ```json
 {
   "dependencies": {
-    "com.barnaff.formulakit": "https://github.com/<your-org>/FormulaKit.git?path=Packages/com.barnaff.formulakit#v1.0.0"
+    "com.barnaff.formulakit": "https://github.com/<your-org>/FormulaKit.git#v1.0.0"
   }
 }
 ```

@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "com.barnaff.formulakit": {
-      "version": "file:../../Packages/com.barnaff.formulakit",
+      "version": "file:../..",
       "depth": 0,
       "source": "local",
       "dependencies": {}
