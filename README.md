@@ -6,6 +6,11 @@ Formula Kit is a Unity package that provides runtime and editor tooling for defi
 
 - `package.json`, `Runtime/`, `Editor/`, `Tests~/` — Unity package contents that can be consumed via Git.
 - `Samples~/Formula Builder Demo/` — Importable sample scene and data that demonstrate the editor tooling and runtime APIs.
+- `DevelopmentProject/` — Minimal Unity project for developing and testing the package locally.
+
+> **Note**
+> Open the `DevelopmentProject` folder from Unity Hub if you want to work on Formula Kit directly inside the editor. The project
+> references the package via a local file dependency so it stays isolated from the distributable package contents.
 
 ## Installing the package from Git
 

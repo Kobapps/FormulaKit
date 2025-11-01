@@ -10,6 +10,11 @@ All notable changes to this package will be documented in this file.
 - Compile Formula Builder examples into a static script instead of loading them from an external text asset.
 - Replace the embedded development project with a Package Manager sample to avoid circular package imports when opening the repository or consuming the Git dependency.
 
+### Fixed
+
+- Restore a standalone Unity development project under `DevelopmentProject` so the repository can be opened directly without import errors.
+- Correct the Formula Builder editor namespace so the window loads after the example refactor.
+
 ## [1.0.0] - 2025-10-31
 
 - Initial extraction of Formula Kit into a Unity package that can be installed from a Git URL.

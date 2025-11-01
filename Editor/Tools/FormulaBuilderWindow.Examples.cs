@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace FormulaKit.Editor.Tools.Tools
+namespace FormulaKit.Editor.Tools
 {
     public partial class FormulaBuilderWindow
     {
