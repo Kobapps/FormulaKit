@@ -8,6 +8,7 @@ All notable changes to this package will be documented in this file.
 
 - Move the package manifest and assets to the repository root so the Git URL can be consumed without a `path` query parameter.
 - Compile Formula Builder examples into a static script instead of loading them from an external text asset.
+- Replace the embedded development project with a Package Manager sample to avoid circular package imports when opening the repository or consuming the Git dependency.
 
 ## [1.0.0] - 2025-10-31
 

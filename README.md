@@ -1,11 +1,11 @@
 # Formula Kit
 
-Formula Kit is a Unity package that provides runtime and editor tooling for defining and executing formulas. The repository contains both the distributable package (located at the repository root) and a sample Unity project that references it for development.
+Formula Kit is a Unity package that provides runtime and editor tooling for defining and executing formulas. The repository contains the distributable package (located at the repository root) and a bundled sample that can be imported through the Unity Package Manager.
 
 ## Repository layout
 
 - `package.json`, `Runtime/`, `Editor/`, `Tests~/` — Unity package contents that can be consumed via Git.
-- `FormulaKit/` — Sample Unity project used to develop and validate the package. The project references the package through a relative path in its `Packages/manifest.json` file.
+- `Samples~/Formula Builder Demo/` — Importable sample scene and data that demonstrate the editor tooling and runtime APIs.
 
 ## Installing the package from Git
 
@@ -21,9 +21,9 @@ Add the package to your Unity project by editing `Packages/manifest.json` and in
 
 Replace `<your-org>` with the account hosting this repository and adjust the tag as required. Unity will download the package contents from the specified revision.
 
-## Local development
+## Samples
 
-When working inside this repository, open the `FormulaKit` Unity project folder in the Unity Editor. Unity will import the package via the relative file reference defined in `Packages/manifest.json` (`"file:../.."`), allowing you to iterate on the package while running the sample scenes.
+After installing the package you can import the **Formula Builder Demo** from the Package Manager window to explore the editor window and runtime evaluation workflow inside your project.
 
 ## License
 

@@ -12,5 +12,12 @@
     "math",
     "expressions"
   ],
-  "dependencies": {}
+  "dependencies": {},
+  "samples": [
+    {
+      "displayName": "Formula Builder Demo",
+      "description": "Sample scene demonstrating the Formula Builder window and runtime evaluation APIs.",
+      "path": "Samples~/Formula Builder Demo"
+    }
+  ]
 }

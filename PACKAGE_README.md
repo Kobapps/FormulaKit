@@ -16,7 +16,7 @@ You can install the package from a Git URL by adding the following entry to your
 
 Replace `<your-org>` with the organisation or user name that hosts this repository and adjust the tag to the version you want to consume.
 
-For local development in this repository, the sample project already references the package via a relative file path. Unity will automatically resolve the package when you open the project.
+After installation you can import the **Formula Builder Demo** sample from the Package Manager to explore the editor tooling and runtime evaluation APIs in context.
 
 ## Contents
 
