@@ -1,8 +1,12 @@
 {
     "name": "FormulaKit.Editor.Tools",
     "rootNamespace": "FormulaKit.Editor.Tools",
-    "references": ["GUID:e1e3580e6e6265a4d9c60f26e600c143"],
-    "includePlatforms": [],
+    "references": [
+        "GUID:e1e3580e6e6265a4d9c60f26e600c143"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
