@@ -34,7 +34,7 @@ namespace FormulaKit.Runtime
         /// </summary>
         public float Evaluate(string formulaId, Dictionary<string, float> inputs)
         {
-            Formula formula = _loader.GetFormula(formulaId);
+            var formula = _loader.GetFormula(formulaId);
             
             if (formula == null)
             {
@@ -45,7 +45,7 @@ namespace FormulaKit.Runtime
             try
             {
                 // Create a copy for local variable support
-                Dictionary<string, float> localContext = new Dictionary<string, float>(inputs);
+                var localContext = new Dictionary<string, float>(inputs);
                 return formula.Evaluate(localContext);
             }
             catch (Exception e)
@@ -60,7 +60,7 @@ namespace FormulaKit.Runtime
         /// </summary>
         public float Evaluate(string formulaId, params (string key, float value)[] inputs)
         {
-            Formula formula = _loader.GetFormula(formulaId);
+            var formula = _loader.GetFormula(formulaId);
             
             if (formula == null)
             {
@@ -113,7 +113,7 @@ namespace FormulaKit.Runtime
         /// </summary>
         public void PrepareFormula(string formulaId)
         {
-            Formula formula = _loader.GetFormula(formulaId);
+            var formula = _loader.GetFormula(formulaId);
             
             if (formula == null)
             {
@@ -121,16 +121,17 @@ namespace FormulaKit.Runtime
                 return;
             }
 
-            if (!_inputPools.ContainsKey(formulaId))
+            if (_inputPools.ContainsKey(formulaId))
             {
-                // Create pooled dictionary with all required inputs
-                var pooledDict = new Dictionary<string, float>();
-                foreach (var inputName in formula.RequiredInputs)
-                {
-                    pooledDict[inputName] = 0f;
-                }
-                _inputPools[formulaId] = pooledDict;
+                return;
             }
+            
+            var pooledDict = new Dictionary<string, float>();
+            foreach (var inputName in formula.RequiredInputs)
+            {
+                pooledDict[inputName] = 0f;
+            }
+            _inputPools[formulaId] = pooledDict;
         }
 
         /// <summary>
@@ -138,7 +139,7 @@ namespace FormulaKit.Runtime
         /// </summary>
         public float[] EvaluateBatch(string formulaId, List<Dictionary<string, float>> batchInputs)
         {
-            Formula formula = _loader.GetFormula(formulaId);
+            var formula = _loader.GetFormula(formulaId);
             
             if (formula == null)
             {
@@ -146,14 +147,13 @@ namespace FormulaKit.Runtime
                 return new float[batchInputs.Count];
             }
 
-            float[] results = new float[batchInputs.Count];
+            var results = new float[batchInputs.Count];
             
             try
             {
-                for (int i = 0; i < batchInputs.Count; i++)
+                for (var i = 0; i < batchInputs.Count; i++)
                 {
-                    // Create local context for each evaluation
-                    Dictionary<string, float> localContext = new Dictionary<string, float>(batchInputs[i]);
+                    var localContext = new Dictionary<string, float>(batchInputs[i]);
                     results[i] = formula.Evaluate(localContext);
                 }
             }
@@ -185,7 +185,7 @@ namespace FormulaKit.Runtime
         /// </summary>
         public bool TryEvaluate(string formulaId, Dictionary<string, float> inputs, out float result)
         {
-            Formula formula = _loader.GetFormula(formulaId);
+            var formula = _loader.GetFormula(formulaId);
             
             if (formula == null)
             {
@@ -195,7 +195,7 @@ namespace FormulaKit.Runtime
 
             try
             {
-                Dictionary<string, float> localContext = new Dictionary<string, float>(inputs);
+                var localContext = new Dictionary<string, float>(inputs);
                 result = formula.Evaluate(localContext);
                 return true;
             }
@@ -226,8 +226,7 @@ namespace FormulaKit.Runtime
             };
         }
 
-        // Events for logging and error handling
-        public event Action<string> OnLog;
+        // Event for error handling
         public event Action<string> OnError;
     }
 
