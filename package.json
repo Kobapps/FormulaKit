@@ -1,6 +1,6 @@
 {
   "name": "com.kobapps.formulakit",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "displayName": "Formula Kit",
   "description": "Runtime formula authoring and evaluation utilities with editor tooling for Unity projects.",
   "unity": "6000.1",

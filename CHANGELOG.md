@@ -2,6 +2,12 @@
 
 All notable changes to this package will be documented in this file.
 
+## [1.2.1] - 2026-05-06
+
+### Changed
+
+- Documented Git URL and the in-app **GitHub Repository** link on the Formula Reference window's About page now point to `https://github.com/Kobapps/FormulaKit` (was `Barnaff/FormulaKit`).
+
 ## [1.2.0] - 2026-05-06
 
 ### Changed

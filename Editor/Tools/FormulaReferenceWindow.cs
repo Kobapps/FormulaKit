@@ -17,7 +17,7 @@ namespace FormulaKit.Editor.Tools
         private const string LogoPath = "Packages/com.kobapps.formulakit/Editor/Textures/KobappsLogo.png";
         private const string IconPath = "Packages/com.kobapps.formulakit/Editor/Textures/FormulaKitIcon.png";
 
-        private const string GithubUrl = "https://github.com/Barnaff/FormulaKit";
+        private const string GithubUrl = "https://github.com/Kobapps/FormulaKit";
         private const string KobappsUrl = "https://kobapps.com/";
 
         private FormulaReferenceData _data;

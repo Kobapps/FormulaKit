@@ -42,7 +42,7 @@ Formula Kit ships as a Unity package installable from a Git URL. Unity **6000.1*
 5. Paste:
 
    ```
-   https://github.com/Barnaff/FormulaKit.git#v1.2.0
+   https://github.com/Kobapps/FormulaKit.git#v1.2.1
    ```
 
 6. Press **Add**. Unity downloads the package and registers it.
@@ -54,12 +54,12 @@ Add an entry under `dependencies` in `Packages/manifest.json`:
 ```json
 {
   "dependencies": {
-    "com.kobapps.formulakit": "https://github.com/Barnaff/FormulaKit.git#v1.2.0"
+    "com.kobapps.formulakit": "https://github.com/Kobapps/FormulaKit.git#v1.2.1"
   }
 }
 ```
 
-Drop the `#v1.2.0` suffix to track the latest commit on `main`. Unity will fetch the package on the next refresh.
+Drop the `#v1.2.1` suffix to track the latest commit on `main`. Unity will fetch the package on the next refresh.
 
 ## API Overview
 
