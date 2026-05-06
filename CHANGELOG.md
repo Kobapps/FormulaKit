@@ -2,6 +2,12 @@
 
 All notable changes to this package will be documented in this file.
 
+## [1.2.2] - 2026-05-06
+
+### Changed
+
+- Lowered the minimum Unity version from 6000.1 to **2022.3 LTS**. Verified the package compiles and the editor windows behave identically on both versions.
+
 ## [1.2.1] - 2026-05-06
 
 ### Changed

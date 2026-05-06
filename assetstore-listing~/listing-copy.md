@@ -81,7 +81,7 @@ For repeated evaluations against the same formula, use `FormulaLoader` + `Formul
 
 ### Technical details
 
-- **Unity:** 6000.1 or newer (UI Toolkit-based editor windows).
+- **Unity:** 2022.3 LTS or newer (UI Toolkit-based editor windows).
 - **Render pipeline:** any (no rendering dependencies).
 - **Platform:** any (runtime is pure C#; editor windows are editor-only).
 - **License:** MIT.
@@ -108,7 +108,7 @@ designer-friendly, ui-toolkit, syntax highlighting, undo, dsl
 
 ## Compatibility
 
-- Unity 6000.1 or newer
+- Unity 2022.3 LTS or newer
 - Render pipelines: Built-in, URP, HDRP (no rendering used)
 - All build targets supported
 
@@ -132,4 +132,4 @@ https://github.com/Kobapps/FormulaKit
 
 > Internal-only field; helps the reviewer if anything is non-obvious. Optional.
 
-Formula Kit ships entirely as a UPM package (`com.kobapps.formulakit`). The package compiles cleanly on Unity 6000.1; both editor windows live under **Tools → Formula Framework**. The included edit-mode tests are registered via `package.json` `testables[]` and pass under the Test Runner (Window → General → Test Runner → Run All).
+Formula Kit ships entirely as a UPM package (`com.kobapps.formulakit`). The package compiles cleanly on Unity 2022.3 LTS and Unity 6000.1; both editor windows live under **Tools → Formula Framework**. The included edit-mode tests are registered via `package.json` `testables[]` and pass under the Test Runner (Window → General → Test Runner → Run All).

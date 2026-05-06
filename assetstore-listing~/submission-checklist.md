@@ -4,7 +4,7 @@ Run through this once before clicking Submit. Items in **bold** are blockers.
 
 ## Package contents (verified in this branch)
 
-- [x] **`package.json`** — name `com.kobapps.formulakit`, version `1.2.1`, displayName, description, unity `6000.1`, author, license `MIT`, documentationUrl, changelogUrl, licensesUrl.
+- [x] **`package.json`** — name `com.kobapps.formulakit`, version `1.2.2`, displayName, description, unity `2022.3`, author, license `MIT`, documentationUrl, changelogUrl, licensesUrl.
 - [x] **`README.md`** — quick-start, install, API guide, supported operations, editor tooling overview.
 - [x] **`CHANGELOG.md`** — semantic-versioned, entries for 1.2.1, 1.2.0, 1.1.1, 1.1.0, 1.0.0.
 - [x] **`LICENSE.md`** — MIT.
@@ -22,7 +22,7 @@ Run through this once before clicking Submit. Items in **bold** are blockers.
 
 ## Manual verification (in PackagesWorkspace, before submitting)
 
-- [ ] Open `PackagesWorkspace` in Unity 6000.1.x. Wait for compilation. **Console clean** — no errors or warnings from FormulaKit.
+- [ ] Open `PackagesWorkspace` in Unity 2022.3 LTS or 6000.1.x. Wait for compilation. **Console clean** — no errors or warnings from FormulaKit.
 - [ ] `Tools → Formula Framework → Formula Builder` opens. Type a formula, evaluate. No exceptions.
 - [ ] `Tools → Formula Framework → Formula Reference` opens. Pages render. Logo loads. Links work (the About page should show clickable GitHub + Kobapps links).
 - [ ] `Window → General → Test Runner → EditMode → Run All`. **All tests pass.**
