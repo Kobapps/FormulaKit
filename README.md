@@ -50,13 +50,10 @@ For repeated evaluations against the same formula, use `FormulaLoader` + `Formul
 
 ## Repository layout
 
-- `package.json`, `Runtime/`, `Editor/`, `Tests~/` — Unity package contents distributed via Git.
-- `Samples~/Formula Builder Demo/` — Importable sample scene and data demonstrating the editor tooling and runtime APIs.
-- `DevelopmentProject/` — Minimal Unity project for developing and testing the package locally. Open this folder from Unity Hub if you want to work on Formula Kit directly; it references the package via a local file dependency so it stays isolated from the distributable contents.
-
-## Samples
-
-After installing the package, import the **Formula Builder Demo** from the Package Manager window to explore the editor windows and runtime evaluation workflow inside your project.
+- `package.json` — Unity package manifest.
+- `Runtime/` — Pure C# runtime (parser, runner, formula nodes, tokenizer, function catalog).
+- `Editor/` — UI Toolkit editor windows (Formula Builder, Formula Reference) and shared design tokens.
+- `Tests/` — Edit-mode tests for the runtime and API.
 
 ## Versioning
 
@@ -64,4 +61,4 @@ This package uses semantic versioning. See [CHANGELOG.md](CHANGELOG.md) for the 
 
 ## License
 
-See the [LICENSE](LICENSE) file for details.
+See the [LICENSE.md](LICENSE.md) file for details.
