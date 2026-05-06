@@ -12,10 +12,10 @@ namespace FormulaKit.Editor.Tools
 {
     public sealed class FormulaBuilderWindow : EditorWindow
     {
-        private const string TokensUssPath = "Packages/com.barnaff.formulakit/Editor/Tools/UI/KobappsEditorTokens.uss";
-        private const string EditorUssPath = "Packages/com.barnaff.formulakit/Editor/Tools/UI/FormulaCodeEditor.uss";
-        private const string WindowUssPath = "Packages/com.barnaff.formulakit/Editor/Tools/UI/FormulaBuilderWindow.uss";
-        private const string IconPath = "Packages/com.barnaff.formulakit/Editor/Textures/FormulaKitIcon.png";
+        private const string TokensUssPath = "Packages/com.kobapps.formulakit/Editor/Tools/UI/KobappsEditorTokens.uss";
+        private const string EditorUssPath = "Packages/com.kobapps.formulakit/Editor/Tools/UI/FormulaCodeEditor.uss";
+        private const string WindowUssPath = "Packages/com.kobapps.formulakit/Editor/Tools/UI/FormulaBuilderWindow.uss";
+        private const string IconPath = "Packages/com.kobapps.formulakit/Editor/Textures/FormulaKitIcon.png";
 
         private static readonly FormulaExample[] Examples =
         {

@@ -10,12 +10,12 @@ namespace FormulaKit.Editor.Tools
 {
     public sealed class FormulaReferenceWindow : EditorWindow
     {
-        private const string TokensUssPath = "Packages/com.barnaff.formulakit/Editor/Tools/UI/KobappsEditorTokens.uss";
-        private const string EditorUssPath = "Packages/com.barnaff.formulakit/Editor/Tools/UI/FormulaCodeEditor.uss";
-        private const string WindowUssPath = "Packages/com.barnaff.formulakit/Editor/Tools/UI/FormulaReferenceWindow.uss";
-        private const string DataPath = "Packages/com.barnaff.formulakit/Editor/Tools/UI/FormulaReference.json";
-        private const string LogoPath = "Packages/com.barnaff.formulakit/Editor/Textures/KobappsLogo.png";
-        private const string IconPath = "Packages/com.barnaff.formulakit/Editor/Textures/FormulaKitIcon.png";
+        private const string TokensUssPath = "Packages/com.kobapps.formulakit/Editor/Tools/UI/KobappsEditorTokens.uss";
+        private const string EditorUssPath = "Packages/com.kobapps.formulakit/Editor/Tools/UI/FormulaCodeEditor.uss";
+        private const string WindowUssPath = "Packages/com.kobapps.formulakit/Editor/Tools/UI/FormulaReferenceWindow.uss";
+        private const string DataPath = "Packages/com.kobapps.formulakit/Editor/Tools/UI/FormulaReference.json";
+        private const string LogoPath = "Packages/com.kobapps.formulakit/Editor/Textures/KobappsLogo.png";
+        private const string IconPath = "Packages/com.kobapps.formulakit/Editor/Textures/FormulaKitIcon.png";
 
         private const string GithubUrl = "https://github.com/Barnaff/FormulaKit";
         private const string KobappsUrl = "https://kobapps.com/";
@@ -304,7 +304,7 @@ namespace FormulaKit.Editor.Tools
             try
             {
                 var manifest = AssetDatabase.LoadAssetAtPath<TextAsset>(
-                    "Packages/com.barnaff.formulakit/package.json");
+                    "Packages/com.kobapps.formulakit/package.json");
                 if (manifest != null)
                 {
                     var parsed = JsonUtility.FromJson<PackageManifestStub>(manifest.text);

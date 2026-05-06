@@ -2,6 +2,16 @@
 
 All notable changes to this package will be documented in this file.
 
+## [1.2.0] - 2026-05-06
+
+### Changed
+
+- **Package renamed**: the UPM identifier moves from `com.barnaff.formulakit` to `com.kobapps.formulakit` to align with the Kobapps namespace. The runtime/editor C# namespaces (`FormulaKit.Runtime`, `FormulaKit.Editor.Tools`, etc.) are unchanged.
+
+### Migration
+
+- Open `Packages/manifest.json`, replace the `com.barnaff.formulakit` key with `com.kobapps.formulakit`, and update the Git URL ref to `#v1.2.0`. Unity will swap packages on next refresh; no source-code changes are required in consuming projects.
+
 ## [1.1.1] - 2026-05-06
 
 ### Fixed
