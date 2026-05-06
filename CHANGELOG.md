@@ -2,6 +2,13 @@
 
 All notable changes to this package will be documented in this file.
 
+## [1.1.1] - 2026-05-06
+
+### Fixed
+
+- Restore the missing `Tests/` and `Tests/Tests/` folder `.meta` files that were dropped during the 1.1.0 layout cleanup. Without them Unity logged "Asset has no meta file, but it's in an immutable folder" warnings on every refresh of a consuming project.
+- Register `FormulaKit.Editor.Tests` in `package.json` `testables[]` so the test assembly is picked up by the Test Runner when the package is installed via UPM.
+
 ## [1.1.0] - 2026-05-06
 
 ### Added
