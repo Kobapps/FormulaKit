@@ -1,0 +1,309 @@
+{
+  "categories": [
+    {
+      "name": "Math",
+      "entries": [
+        {
+          "name": "abs",
+          "kind": "function",
+          "signature": "abs(value)",
+          "summary": "Absolute value.",
+          "description": "Returns the magnitude of value, always non-negative.",
+          "example": "abs(-7.5)"
+        },
+        {
+          "name": "ceil",
+          "kind": "function",
+          "signature": "ceil(value)",
+          "summary": "Round up to the nearest integer.",
+          "description": "Returns the smallest integer greater than or equal to value.",
+          "example": "ceil(2.3)"
+        },
+        {
+          "name": "floor",
+          "kind": "function",
+          "signature": "floor(value)",
+          "summary": "Round down to the nearest integer.",
+          "description": "Returns the largest integer less than or equal to value.",
+          "example": "floor(2.8)"
+        },
+        {
+          "name": "round",
+          "kind": "function",
+          "signature": "round(value)",
+          "summary": "Round to the nearest integer.",
+          "description": "Returns value rounded to the nearest integer using banker's rounding.",
+          "example": "round(2.5)"
+        },
+        {
+          "name": "sign",
+          "kind": "function",
+          "signature": "sign(value)",
+          "summary": "Sign of a number.",
+          "description": "Returns -1 if value is negative, 1 otherwise.",
+          "example": "sign(-3)"
+        },
+        {
+          "name": "negative",
+          "kind": "function",
+          "signature": "negative(value)",
+          "summary": "Negate a number.",
+          "description": "Returns the value with its sign flipped (-value).",
+          "example": "negative(5)"
+        },
+        {
+          "name": "sqrt",
+          "kind": "function",
+          "signature": "sqrt(value)",
+          "summary": "Square root.",
+          "description": "Returns the non-negative square root of value.",
+          "example": "sqrt(16)"
+        },
+        {
+          "name": "pow",
+          "kind": "function",
+          "signature": "pow(value, power)",
+          "summary": "Raise value to a power.",
+          "description": "Returns value raised to the given power. Equivalent to value ^ power.",
+          "example": "pow(2, 8)"
+        },
+        {
+          "name": "exp",
+          "kind": "function",
+          "signature": "exp(power)",
+          "summary": "Euler's number raised to a power.",
+          "description": "Returns e^power, where e is Euler's number (~2.71828).",
+          "example": "exp(1)"
+        },
+        {
+          "name": "log",
+          "kind": "function",
+          "signature": "log(value)",
+          "summary": "Natural logarithm.",
+          "description": "Returns the natural logarithm (base e) of value.",
+          "example": "log(exp(1))"
+        },
+        {
+          "name": "min",
+          "kind": "function",
+          "signature": "min(a, b)",
+          "summary": "Minimum of two values.",
+          "description": "Returns the smaller of a and b.",
+          "example": "min(3, 7)"
+        },
+        {
+          "name": "max",
+          "kind": "function",
+          "signature": "max(a, b)",
+          "summary": "Maximum of two values.",
+          "description": "Returns the larger of a and b.",
+          "example": "max(3, 7)"
+        },
+        {
+          "name": "clamp",
+          "kind": "function",
+          "signature": "clamp(value, min, max)",
+          "summary": "Clamp value between min and max.",
+          "description": "Returns value, bounded by min and max. If value < min returns min; if value > max returns max.",
+          "example": "clamp(15, 0, 10)"
+        },
+        {
+          "name": "clamp01",
+          "kind": "function",
+          "signature": "clamp01(value)",
+          "summary": "Clamp between 0 and 1.",
+          "description": "Returns value, bounded between 0 and 1 inclusive.",
+          "example": "clamp01(1.4)"
+        },
+        {
+          "name": "lerp",
+          "kind": "function",
+          "signature": "lerp(a, b, t)",
+          "summary": "Linear interpolation.",
+          "description": "Returns a value interpolated linearly between a and b by t. When t = 0 returns a; when t = 1 returns b.",
+          "example": "lerp(0, 100, 0.25)"
+        }
+      ]
+    },
+    {
+      "name": "Trigonometry",
+      "entries": [
+        {
+          "name": "sin",
+          "kind": "function",
+          "signature": "sin(radians)",
+          "summary": "Sine of an angle in radians.",
+          "description": "Returns the sine of the given angle, expressed in radians.",
+          "example": "sin(0)"
+        },
+        {
+          "name": "cos",
+          "kind": "function",
+          "signature": "cos(radians)",
+          "summary": "Cosine of an angle in radians.",
+          "description": "Returns the cosine of the given angle, expressed in radians.",
+          "example": "cos(0)"
+        },
+        {
+          "name": "tan",
+          "kind": "function",
+          "signature": "tan(radians)",
+          "summary": "Tangent of an angle in radians.",
+          "description": "Returns the tangent of the given angle, expressed in radians.",
+          "example": "tan(0)"
+        },
+        {
+          "name": "asin",
+          "kind": "function",
+          "signature": "asin(value)",
+          "summary": "Arc sine in radians.",
+          "description": "Returns the angle (in radians) whose sine is value.",
+          "example": "asin(1)"
+        },
+        {
+          "name": "acos",
+          "kind": "function",
+          "signature": "acos(value)",
+          "summary": "Arc cosine in radians.",
+          "description": "Returns the angle (in radians) whose cosine is value.",
+          "example": "acos(0)"
+        },
+        {
+          "name": "atan",
+          "kind": "function",
+          "signature": "atan(value)",
+          "summary": "Arc tangent in radians.",
+          "description": "Returns the angle (in radians) whose tangent is value.",
+          "example": "atan(1)"
+        }
+      ]
+    },
+    {
+      "name": "Random",
+      "entries": [
+        {
+          "name": "random",
+          "kind": "function",
+          "signature": "random()",
+          "summary": "Random float between 0 and 1.",
+          "description": "Returns a random float in the range [0, 1).",
+          "example": "random()"
+        },
+        {
+          "name": "rand",
+          "kind": "function",
+          "signature": "rand(maxExclusive)",
+          "summary": "Random integer below maxExclusive.",
+          "description": "Returns a random integer in the range [0, maxExclusive).",
+          "example": "rand(6) + 1"
+        },
+        {
+          "name": "randf",
+          "kind": "function",
+          "signature": "randf(maxExclusive)",
+          "summary": "Random float below maxExclusive.",
+          "description": "Returns a random float in the range [0, maxExclusive).",
+          "example": "randf(100)"
+        }
+      ]
+    },
+    {
+      "name": "Keywords",
+      "entries": [
+        {
+          "name": "let",
+          "kind": "keyword",
+          "signature": "let <name> = <expression>",
+          "summary": "Declare a local variable.",
+          "description": "Introduces a local variable, scoped to the formula. Local variables don't appear in the inputs panel and can be reassigned.",
+          "example": "let dmg = baseDamage * 1.5;\ndmg + bonus"
+        },
+        {
+          "name": "if / else",
+          "kind": "keyword",
+          "signature": "if (condition) { ... } else { ... }",
+          "summary": "Conditional execution.",
+          "description": "Executes the first block when condition is non-zero (true); otherwise executes the optional else block. Else blocks may chain via 'else if'.",
+          "example": "let mult;\nif (score >= 1000) { mult = 3 }\nelse if (score >= 500) { mult = 2 }\nelse { mult = 1 }\nbaseReward * mult"
+        },
+        {
+          "name": "true / false",
+          "kind": "keyword",
+          "signature": "true | false",
+          "summary": "Boolean literals.",
+          "description": "Boolean values, which evaluate to 1 (true) or 0 (false) in numeric contexts.",
+          "example": "true ? 10 : 0"
+        },
+        {
+          "name": "return",
+          "kind": "keyword",
+          "signature": "return <expression>",
+          "summary": "Return a value early.",
+          "description": "Stops formula execution and returns the given expression's value.",
+          "example": "if (hp <= 0) { return 0 }\ndamage"
+        }
+      ]
+    },
+    {
+      "name": "Operators",
+      "entries": [
+        {
+          "name": "+ - * /",
+          "kind": "operator",
+          "signature": "a + b   a - b   a * b   a / b",
+          "summary": "Arithmetic operators.",
+          "description": "Standard arithmetic. Division by zero produces infinity / NaN per IEEE-754.",
+          "example": "(2 + 3) * 4 / 2"
+        },
+        {
+          "name": "% (modulo)",
+          "kind": "operator",
+          "signature": "a % b",
+          "summary": "Remainder of a divided by b.",
+          "description": "Returns the floating-point remainder of a / b. Sign follows a.",
+          "example": "10 % 3"
+        },
+        {
+          "name": "^ (power)",
+          "kind": "operator",
+          "signature": "a ^ b",
+          "summary": "Raise a to the power b.",
+          "description": "Equivalent to pow(a, b).",
+          "example": "2 ^ 10"
+        },
+        {
+          "name": "Comparison",
+          "kind": "operator",
+          "signature": "a == b   a != b   a < b   a <= b   a > b   a >= b",
+          "summary": "Compare two values.",
+          "description": "Comparison operators return 1 (true) or 0 (false).",
+          "example": "score >= 100"
+        },
+        {
+          "name": "Logical",
+          "kind": "operator",
+          "signature": "a && b   a || b   !a",
+          "summary": "Boolean logic.",
+          "description": "&& is logical AND, || is logical OR, ! is logical NOT. Operands are treated as truthy when non-zero.",
+          "example": "(hp > 0) && (mana >= cost)"
+        },
+        {
+          "name": "Ternary",
+          "kind": "operator",
+          "signature": "condition ? whenTrue : whenFalse",
+          "summary": "Conditional expression.",
+          "description": "Evaluates condition; returns whenTrue if it is non-zero, otherwise whenFalse.",
+          "example": "isCrit ? baseDamage * 2 : baseDamage"
+        },
+        {
+          "name": "Assignment",
+          "kind": "operator",
+          "signature": "x = v   x += v   x -= v   x *= v   x /= v",
+          "summary": "Assign or compound-assign a value.",
+          "description": "Assigns the right-hand value to the named variable. Compound forms read-modify-write the existing value.",
+          "example": "let x = 1;\nx += 5;\nx *= 2;\nx"
+        }
+      ]
+    }
+  ]
+}

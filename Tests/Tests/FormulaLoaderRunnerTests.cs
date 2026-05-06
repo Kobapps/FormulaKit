@@ -48,7 +48,27 @@ namespace FormulaKit.Editor.Tests
             Assert.That(_loader.HasFormula("invalid"), Is.False, "Invalid formulas should not be cached");
             Assert.That(receivedError, Does.Contain("invalid"));
         }
-        
+
+        [Test]
+        public void RegisterFormulas_ProcessesValidAndInvalidDefinitions()
+        {
+            var definitions = new List<FormulaDefinition>
+            {
+                new FormulaDefinition("valid", "a * 2"),
+                new FormulaDefinition("invalid", "if ("),
+                new FormulaDefinition("another", "let tmp = a + 1; tmp + b")
+            };
+
+            LogAssert.Expect(LogType.Error, new Regex(@"\[FormulaParser\] Parse error"));
+            int registeredCount = _loader.RegisterFormulas(definitions);
+
+            Assert.That(registeredCount, Is.EqualTo(2));
+            Assert.That(_loader.HasFormula("valid"), Is.True);
+            Assert.That(_loader.HasFormula("another"), Is.True);
+            Assert.That(_loader.HasFormula("invalid"), Is.False);
+            Assert.That(_loader.GetFormulaCount(), Is.EqualTo(2));
+        }
+
         [Test]
         public void RemoveFormula_RemovesCachedFormula()
         {
@@ -121,7 +141,7 @@ namespace FormulaKit.Editor.Tests
         }
 
         [Test]
-        public void Evaluate_WithMissingInput_ShouldIgnoreMissing()
+        public void Evaluate_WithMissingInput_InvokesErrorHandler()
         {
             _loader.RegisterFormula("sum", "a + b");
             string receivedError = null;
@@ -129,7 +149,8 @@ namespace FormulaKit.Editor.Tests
 
             float result = _runner.Evaluate("sum", new Dictionary<string, float> { { "a", 2f } });
 
-            Assert.That(result, Is.EqualTo(2f));
+            Assert.That(result, Is.EqualTo(0f));
+            Assert.That(receivedError, Does.Contain("Variable 'b'"));
         }
 
         [Test]
@@ -177,15 +198,15 @@ namespace FormulaKit.Editor.Tests
         }
 
         [Test]
-        public void TryEvaluate_WhenInputsMissing_SshouldIgnoreMissing()
+        public void TryEvaluate_ReturnsFalseWhenInputsMissing()
         {
             _loader.RegisterFormula("sum", "a + b");
             var inputs = new Dictionary<string, float> { { "a", 1f } };
 
             bool success = _runner.TryEvaluate("sum", inputs, out float result);
 
-            Assert.That(result, Is.EqualTo(1f));
-            Assert.That(success, Is.True);
+            Assert.That(success, Is.False);
+            Assert.That(result, Is.EqualTo(0f));
         }
 
         [Test]

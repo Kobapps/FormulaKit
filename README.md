@@ -1,267 +1,64 @@
-Formula Kit is a lightweight expression authoring framework for Unity projects. It allows designers to author readable formulas
-that can be provided as plain strings from any source (ScriptableObjects, TextAssets, remote configs, etc.) and comes with an
-editor window that accelerates iteration.
+# Formula Kit
 
-## Table of Contents
+Formula Kit is a Unity package for defining, validating, and evaluating arbitrary numeric formulas at runtime. It ships with a Unity 6 UI Toolkit editor toolchain — a builder window for authoring and testing formulas, and a reference window documenting every supported function, keyword, and operator.
 
-- [API Overview](#api-overview)
-  - [Inline Evaluation](#inline-evaluation)
-  - [Fluent Builder](#fluent-builder)
-- [Advanced Usage](#advanced-usage)
-  - [Using FormulaLoader and FormulaRunner](#using-formulaloader-and-formularunner)
-  - [Caching Strategies](#caching-strategies)
-- [Supported Operations](#supported-operations)
-  - [Expression Syntax](#expression-syntax)
-  - [Built-in Functions](#built-in-functions)
-  - [Random Helpers](#random-helpers)
-- [Features](#features)
-- [Installation](#installation)
-  - [Add via Unity Package Manager](#add-via-unity-package-manager)
-  - [Install by Editing `manifest.json`](#install-by-editing-manifestjson)
-- [Editor Tooling](#editor-tooling)
-- [Samples](#samples)
-- [Additional Resources](#additional-resources)
-- [License](#license)
+- **Runtime evaluator** — parse formulas once, evaluate many times. Pure C#, no Unity-specific dependencies in the core nodes.
+- **Formula language** — arithmetic, comparisons, boolean logic, ternary, `let` locals, `if`/`else`, `return`, and a built-in math/random function library.
+- **Formula Builder window** — UI Toolkit editor with syntax highlighting, snapshot-based undo, live input auto-detection, inline parse-error markers, and one-click evaluation.
+- **Formula Reference window** — searchable, categorized reference for every supported expression with inline runnable examples.
 
-## API Overview
+## Installing the package from Git
 
-Formula Kit ships with a static `FormulaAPI` that offers the quickest way to evaluate expressions. Expressions can be evaluated
-inline or via a fluent builder that caches parsed formulas for reuse.
-
-### Inline Evaluation
-
-```csharp
-using FormulaKit.Runtime;
-using System.Collections.Generic;   
-
-var inputs = new Dictionary<string, float>
-{
-    ["baseDamage"] = 10f,
-    ["strength"] = 5f
-};
-
-float total = FormulaAPI.Run("baseDamage * (1 + strength * 0.1f)", inputs);
-```
-
-- Formulas return `float` values.
-- Input variables that are not supplied default to `0`.
-- A deterministic cache identifier is generated automatically so repeated calls reuse the parsed formula.
-- Expressions are plain strings, so you can source them from any Unity asset, configuration system, or even download them at
-  runtime before evaluation.
-
-#### Static API Examples
-
-`FormulaAPI.Run(expression, inputs)` is versatile enough to cover many gameplay scenarios. The following snippets each supply
-the inputs that matter for a specific expression:
-
-```csharp
-// Arithmetic scaling
-var damageInputs = new Dictionary<string, float>
-{
-    ["baseDamage"] = 18f,
-    ["strength"] = 12f
-};
-
-float scaledDamage = FormulaAPI.Run("baseDamage * (1 + strength * 0.05)", damageInputs);
-```
-
-```csharp
-// Built-in helpers and clamping
-var energyInputs = new Dictionary<string, float>
-{
-    ["currentEnergy"] = 45f,
-    ["regen"] = 10f,
-    ["deltaTime"] = 0.5f,
-    ["maxEnergy"] = 100f
-};
-
-float energyTick = FormulaAPI.Run("clamp(currentEnergy + regen * deltaTime, 0, maxEnergy)", energyInputs);
-```
-
-```csharp
-// Branching with the ternary operator and random rolls
-var critInputs = new Dictionary<string, float>
-{
-    ["critChance"] = 0.25f,
-    ["critMultiplier"] = 2f
-};
-
-float critRoll = FormulaAPI.Run("randf(1) < critChance ? critMultiplier : 1", critInputs);
-```
-
-```csharp
-// Function composition for vector math
-var travelInputs = new Dictionary<string, float>
-{
-    ["dx"] = 3f,
-    ["dy"] = 4f,
-    ["distanceWeight"] = 0.6f
-};
-
-float travelCost = FormulaAPI.Run("sqrt(dx * dx + dy * dy) * distanceWeight", travelInputs);
-```
-
-```csharp
-// Scoped variables and expressions via `let`
-var supportInputs = new Dictionary<string, float>
-{
-    ["baseDamage"] = 18f,
-    ["spirit"] = 30f,
-    ["targetSpirit"] = 24f
-};
-
-float supportHeal = FormulaAPI.Run(
-    @"let bonus = max(0, (spirit - targetSpirit) * 0.25);
-      baseDamage + bonus",
-    supportInputs);
-```
-
-Each call highlights a different facet of the expression language, giving you a starting point for arithmetic chains, helper
-functions, branching logic, and multi-step calculations.
-
-### Fluent Builder
-
-```csharp
-using FormulaFramework;
-
-float critical = FormulaAPI
-    .Run("(baseDamage + bonus) * crit")
-    .Set("baseDamage", 12f)
-    .Set("bonus", 3f)
-    .Set("crit", 1.5f)
-    .Evaluate();
-```
-
-The builder lets you populate inputs incrementally. Call `WithCache("myKey")` instead of `Evaluate()` to provide a custom cache
-identifier when you want to share the parsed expression between systems.
-
-## Features
-
-- Runtime parser that evaluates arithmetic, logical, and conditional expressions.
-- Deterministic evaluation backed by a node graph representation.
-- Lightweight runtime APIs that accept string formulas from any source in your project.
-- Editor tooling for prototyping, including syntax highlighting and evaluation helpers.
-- Test assembly demonstrating expected behaviours.
-
-## Installation
-
-Formula Kit is distributed as a Unity package that can be installed directly from a Git URL. Unity 2021.3 LTS or newer is required.
-
-### Add via Unity Package Manager
-
-1. Open your Unity project.
-2. Navigate to **Window → Package Manager**.
-3. Click the **+** button in the top-left corner of the Package Manager window.
-4. Select **Add package from git URL...**.
-5. Paste the repository URL:
-
-   ```
-   https://github.com/Barnaff/FormulaKit.git
-   ```
-
-6. Press **Add**. Unity downloads the package and registers it inside your project.
-
-### Install by Editing `manifest.json`
-
-If you prefer to edit your project's `Packages/manifest.json` manually, add an entry under the `dependencies` section:
+Add the package to your Unity project by editing `Packages/manifest.json` and including a Git dependency:
 
 ```json
 {
   "dependencies": {
-    "com.barnaff.formulakit": "https://github.com/Barnaff/FormulaKit.git",
-    "com.unity.modules.ui": "1.0.0",
-    "com.unity.modules.uielements": "1.0.0"
+    "com.barnaff.formulakit": "https://github.com/Barnaff/FormulaKit.git#v1.1.0"
   }
 }
 ```
 
-Save the file and Unity will fetch the package the next time the editor refreshes packages.
+Adjust the tag as required for the release you want. Unity will download the package contents from the specified revision.
 
-## Advanced Usage
+## Editor tools
 
-### Using FormulaLoader and FormulaRunner
+Both windows live under **Tools → Formula Framework** in the Unity menu bar:
 
-For projects that manage many expressions, instantiate `FormulaLoader` and `FormulaRunner` directly. Register formulas in code
-or inject string expressions from whichever content pipeline you use (ScriptableObjects, TextAssets, remote configs, etc.) and
-evaluate them by ID.
+- **Formula Builder** — write a formula, watch detected inputs appear automatically, set per-input values, click **Evaluate** for a result. Syntax errors are marked inline.
+- **Formula Reference** — left-side category list of every function, keyword, and operator; right-side details with a working, evaluated example. Includes an About page with the package version.
+
+## Runtime API quick start
 
 ```csharp
 using FormulaKit.Runtime;
 using System.Collections.Generic;
 
-var loader = new FormulaLoader();
-loader.RegisterFormula("heal", "baseHeal + spirit * 0.5f");
-loader.RegisterFormula("bossPhase", bossPhaseFormulaTextAsset.text);
+var parser = new FormulaParser();
+var formula = parser.Parse("baseDamage * (1 + strength * 0.1)");
 
-var runner = new FormulaRunner(loader);
-var damage = runner.Evaluate("damage", new Dictionary<string, float>
+var inputs = new Dictionary<string, float>
 {
-    ["baseDamage"] = 10f,
-    ["strength"] = 5f
-});
+    ["baseDamage"] = 25f,
+    ["strength"]   = 12f,
+};
+
+float damage = formula.Evaluate(inputs); // 55
 ```
 
-Mix and match formulas registered in code and formulas sourced from external content such as TextAssets, ScriptableObjects, or
-remote configuration payloads. Each formula is referenced by the string identifier used during registration.
+For repeated evaluations against the same formula, use `FormulaLoader` + `FormulaRunner` (cached + pooled inputs). For tokenization or to enumerate the built-in function catalog, see `FormulaTokenizer` and `FormulaFunctions`.
 
-### Caching Strategies
+## Repository layout
 
-- `FormulaAPI.Run(expression).WithCache("id")` stores the parsed expression under a custom key so other systems can reuse it.
-- Call `FormulaRunner.PrepareFormula("damage")` to pool input dictionaries for hot paths before entering a tight loop.
-- Use `FormulaRunner.UseInputPooling = false` when you prefer to allocate fresh dictionaries for every evaluation.
-- `FormulaAPI.ClearCache()` removes all cached expressions and pooled inputs.
+- `package.json` — Unity package manifest.
+- `Runtime/` — Pure C# runtime (parser, runner, formula nodes, tokenizer, function catalog).
+- `Editor/` — UI Toolkit editor windows (Formula Builder, Formula Reference) and shared design tokens.
+- `Tests/` — Edit-mode tests for the runtime and API.
 
-## Supported Operations
+## Versioning
 
-### Expression Syntax
-
-- Arithmetic: `+`, `-`, `*`, `/`, `%`, and exponentiation `^`.
-- Unary operations: prefix `+`, prefix `-`, and logical negation `!`.
-- Comparisons: `<`, `<=`, `>`, `>=`, `==`, `!=`.
-- Logical operators: `&&`, `||`.
-- Conditional operator: `condition ? whenTrue : whenFalse`.
-- Statements: `let` declarations, assignments (`=`, `+=`, `-=`, `*=`, `/=`), `if`/`else`, and block scopes `{ ... }`.
-
-### Built-in Functions
-
-Unary helpers:
-
-`sqrt`, `abs`, `floor`, `ceil`, `round`, `sin`, `cos`, `tan`, `log`, `exp`, `clamp01`, `sign`, `negative`, `acos`, `asin`, `atan`.
-
-Multi-argument helpers:
-
-`min(a, b)`, `max(a, b)`, `clamp(value, min, max)`, `lerp(a, b, t)`, `pow(a, b)`.
-
-### Random Helpers
-
-- `random()` returns a float in `[0, 1]`.
-- `rand(max)` returns an integer from `0` to `max - 1`.
-- `randf(max)` returns a float in `[0, max)`.
-
-## Editor Tooling
-
-Open the Formula Builder via **Tools → Formula Framework → Formula Builder**. The window provides:
-
-<img width="600" height="892" alt="image" src="https://github.com/user-attachments/assets/66960947-e611-40f9-bf3b-61e4b57fd5e7" />
-
-- An advanced expression editor with syntax highlighting and inline validation.
-- Auto-detection of input variables and quick entry of sample values.
-- Real-time evaluation so designers can test calculations before committing them to code.
-- A curated library of function snippets for common arithmetic operations.
-- Built-in examples that populate the editor and auto-fill inputs.
-
-The editor works without any additional setup once the package is installed.
-
-## Samples
-
-The package ships with an optional sample under **Formula Builder Quickstart** that walks through the editor workflow and includes
-ready-made formulas covering common gameplay systems. Import it through the Unity Package Manager window to explore the examples.
-
-## Additional Resources
-
-- Tests under the `Tests/` folder demonstrate expected runtime behaviours.
-- Submit issues and feature requests through the repository issue tracker.
+This package uses semantic versioning. See [CHANGELOG.md](CHANGELOG.md) for the full release history.
 
 ## License
 
-Formula Kit is provided under the MIT License. See `LICENSE.md` for details.
+See the [LICENSE.md](LICENSE.md) file for details.

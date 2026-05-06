@@ -11,9 +11,9 @@ namespace FormulaKit.Runtime
     /// </summary>
     public static class FormulaAPI
     {
-        private static readonly object SyncRoot = new();
-        private static readonly FormulaLoader Loader = new();
-        private static readonly FormulaRunner Runner = new(Loader);
+        private static readonly object SyncRoot = new object();
+        private static readonly FormulaLoader Loader = new FormulaLoader();
+        private static readonly FormulaRunner Runner = new FormulaRunner(Loader);
 
         /// <summary>
         /// Start building a formula execution request using a fluent API.
@@ -79,7 +79,7 @@ namespace FormulaKit.Runtime
                 var formulas = new Dictionary<string, string>();
                 foreach (var id in Loader.GetAllFormulaIds())
                 {
-                    var expression = Loader.GetFormulaExpression(id);
+                    string expression = Loader.GetFormulaExpression(id);
                     if (expression != null)
                     {
                         formulas[id] = expression;
@@ -92,13 +92,13 @@ namespace FormulaKit.Runtime
 
         private static string EnsureFormula(string expression, string cacheId)
         {
-            var formulaId = string.IsNullOrWhiteSpace(cacheId)
+            string formulaId = string.IsNullOrWhiteSpace(cacheId)
                 ? GenerateCacheId(expression)
                 : cacheId;
 
             lock (SyncRoot)
             {
-                var existingExpression = Loader.GetFormulaExpression(formulaId);
+                string existingExpression = Loader.GetFormulaExpression(formulaId);
                 if (existingExpression == null || !string.Equals(existingExpression, expression, StringComparison.Ordinal))
                 {
                     if (!Loader.RegisterFormula(formulaId, expression))
@@ -113,14 +113,16 @@ namespace FormulaKit.Runtime
 
         private static string GenerateCacheId(string expression)
         {
-            using var sha = SHA256.Create();
-            var hash = sha.ComputeHash(Encoding.UTF8.GetBytes(expression));
-            var builder = new StringBuilder(hash.Length * 2);
-            foreach (var b in hash)
+            using (var sha = SHA256.Create())
             {
-                builder.Append(b.ToString("x2"));
+                byte[] hash = sha.ComputeHash(Encoding.UTF8.GetBytes(expression));
+                var builder = new StringBuilder(hash.Length * 2);
+                foreach (byte b in hash)
+                {
+                    builder.Append(b.ToString("x2"));
+                }
+                return builder.ToString();
             }
-            return builder.ToString();
         }
 
         /// <summary>
@@ -192,7 +194,7 @@ namespace FormulaKit.Runtime
 
             private float EvaluateInternal(string cacheId)
             {
-                var formulaId = EnsureFormula(_expression, cacheId);
+                string formulaId = EnsureFormula(_expression, cacheId);
                 var inputCopy = new Dictionary<string, float>(_inputs);
                 return Runner.Evaluate(formulaId, inputCopy);
             }

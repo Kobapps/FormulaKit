@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using FormulaKit.Runtime.Nodes;
 
 namespace FormulaKit.Runtime
 {
@@ -9,14 +10,14 @@ namespace FormulaKit.Runtime
     {
         public string Expression { get; private set; }
         public HashSet<string> RequiredInputs { get; private set; }
-       
+
         private readonly IFormulaNode _rootNode;
 
         public Formula(string expression, IFormulaNode rootNode, HashSet<string> requiredInputs)
         {
             Expression = expression;
-            RequiredInputs = requiredInputs;
             _rootNode = rootNode;
+            RequiredInputs = requiredInputs;
         }
 
         /// <summary>
@@ -24,7 +25,14 @@ namespace FormulaKit.Runtime
         /// </summary>
         public float Evaluate(Dictionary<string, float> inputs)
         {
-            return _rootNode.Evaluate(inputs);
+            try
+            {
+                return _rootNode.Evaluate(inputs);
+            }
+            catch (FormulaReturnException ex)
+            {
+                return ex.Value;
+            }
         }
     }
 
@@ -35,4 +43,37 @@ namespace FormulaKit.Runtime
     {
         float Evaluate(Dictionary<string, float> inputs);
     }
+
+    
+   
+    
+
+   
+
+    
+
+    // ============== ADVANCED NODES ==============
+
+   
+
+   
+
+  
+
+    
+
+   
+
+   
+
+    
+    
+    
+    
+
+    
+
+   
+
+    
 }

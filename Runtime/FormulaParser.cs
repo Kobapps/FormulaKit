@@ -10,6 +10,30 @@ namespace FormulaKit.Runtime
     /// Unified formula parser supporting both simple expressions and advanced features.
     /// Automatically detects and parses: variables, conditionals, comparisons, logical operators, etc.
     /// </summary>
+    public readonly struct FormulaParseResult
+    {
+        public Formula Formula { get; }
+        public bool IsSuccess { get; }
+        public string ErrorMessage { get; }
+        public int ErrorLine { get; }
+        public int ErrorColumn { get; }
+
+        private FormulaParseResult(Formula formula, bool isSuccess, string error, int line, int column)
+        {
+            Formula = formula;
+            IsSuccess = isSuccess;
+            ErrorMessage = error;
+            ErrorLine = line;
+            ErrorColumn = column;
+        }
+
+        public static FormulaParseResult Success(Formula formula) =>
+            new FormulaParseResult(formula, true, null, 0, 0);
+
+        public static FormulaParseResult Error(string message, int line, int column) =>
+            new FormulaParseResult(null, false, message, line, column);
+    }
+
     public class FormulaParser
     {
         private string _expression;
@@ -17,12 +41,13 @@ namespace FormulaKit.Runtime
         private HashSet<string> _inputVariables;
         private HashSet<string> _localVariables;
         private readonly IRandomProvider _randomProvider;
+        private bool _suppressLogging;
 
         public FormulaParser(IRandomProvider randomProvider = null)
         {
             _randomProvider = randomProvider ?? new DefaultRandomProvider();
         }
-        
+
         public Formula Parse(string formulaExpression)
         {
             _expression = formulaExpression;
@@ -46,7 +71,33 @@ namespace FormulaKit.Runtime
                 throw;
             }
         }
-        
+
+        public FormulaParseResult TryParse(string formulaExpression)
+        {
+            _suppressLogging = true;
+            try
+            {
+                var formula = Parse(formulaExpression);
+                return FormulaParseResult.Success(formula);
+            }
+            catch (FormatException ex)
+            {
+                var ctx = BuildErrorContext();
+                return FormulaParseResult.Error(ex.Message, ctx.line, ctx.column);
+            }
+            catch (Exception ex)
+            {
+                var ctx = BuildErrorContext();
+                return FormulaParseResult.Error(ex.Message, ctx.line, ctx.column);
+            }
+            finally
+            {
+                _suppressLogging = false;
+            }
+        }
+
+        // ============== STATEMENT PARSING ==============
+
         private IFormulaNode ParseStatements()
         {
             var statements = new List<IFormulaNode>();
@@ -100,6 +151,12 @@ namespace FormulaKit.Runtime
                 return ParseIfStatement();
             }
 
+            // Check for 'return' statement
+            if (PeekWord() == "return")
+            {
+                return ParseReturnStatement();
+            }
+
             // Check for block
             if (Peek() == '{')
             {
@@ -108,6 +165,27 @@ namespace FormulaKit.Runtime
 
             // Otherwise, it's an expression or assignment
             return ParseAssignmentOrExpression();
+        }
+
+        private IFormulaNode ParseReturnStatement()
+        {
+            ConsumeWord("return");
+            SkipWhitespace();
+
+            // 'return' alone returns 0; 'return <expr>' returns the expression's value.
+            if (_position >= _expression.Length)
+            {
+                return new ReturnNode(new ConstantNode(0f));
+            }
+
+            char next = Peek();
+            if (next == ';' || next == '\n' || next == '\r' || next == '}')
+            {
+                return new ReturnNode(new ConstantNode(0f));
+            }
+
+            var value = ParseExpression();
+            return new ReturnNode(value);
         }
 
         private IFormulaNode ParseDeclaration()
@@ -181,7 +259,7 @@ namespace FormulaKit.Runtime
 
             while (_position < _expression.Length && Peek() != '}')
             {
-                var statement = ParseStatement();
+                IFormulaNode statement = ParseStatement();
                 if (statement != null)
                 {
                     statements.Add(statement);
@@ -202,12 +280,18 @@ namespace FormulaKit.Runtime
             }
             Read();
 
-            return statements.Count switch
+            if (statements.Count == 0)
             {
-                0 => new EmptyNode(),
-                1 => statements[0],
-                _ => new SequenceNode(statements.ToArray())
-            };
+                return new NoOpNode();
+            }
+            else if (statements.Count == 1)
+            {
+                return statements[0];
+            }
+            else
+            {
+                return new SequenceNode(statements.ToArray());
+            }
         }
 
         private IFormulaNode ParseAssignmentOrExpression()
@@ -230,32 +314,35 @@ namespace FormulaKit.Runtime
                 SkipWhitespace();
                 var value = ParseExpression();
                     
-                _localVariables.Add(identifier);
+                if (!_localVariables.Contains(identifier))
+                {
+                    _localVariables.Add(identifier);
+                }
                     
-                return new AssignmentNode(identifier, value);
+                return new AssignmentNode(identifier, value, AssignmentNode.AssignmentOperator.Assign);
             }
-            if (Peek() == '+' && PeekNext() == '=')
+            else if (Peek() == '+' && PeekNext() == '=')
             {
                 Read(); Read(); // consume '+='
                 SkipWhitespace();
                 var value = ParseExpression();
                 return new AssignmentNode(identifier, value, AssignmentNode.AssignmentOperator.AddAssign);
             }
-            if (Peek() == '-' && PeekNext() == '=')
+            else if (Peek() == '-' && PeekNext() == '=')
             {
                 Read(); Read(); // consume '-='
                 SkipWhitespace();
                 var value = ParseExpression();
                 return new AssignmentNode(identifier, value, AssignmentNode.AssignmentOperator.SubAssign);
             }
-            if (Peek() == '*' && PeekNext() == '=')
+            else if (Peek() == '*' && PeekNext() == '=')
             {
                 Read(); Read(); // consume '*='
                 SkipWhitespace();
                 var value = ParseExpression();
                 return new AssignmentNode(identifier, value, AssignmentNode.AssignmentOperator.MulAssign);
             }
-            if (Peek() == '/' && PeekNext() == '=')
+            else if (Peek() == '/' && PeekNext() == '=')
             {
                 Read(); Read(); // consume '/='
                 SkipWhitespace();
@@ -268,7 +355,9 @@ namespace FormulaKit.Runtime
 
             return ParseExpression();
         }
-        
+
+        // ============== EXPRESSION PARSING ==============
+
         private IFormulaNode ParseExpression()
         {
             return ParseTernary();
@@ -348,14 +437,14 @@ namespace FormulaKit.Runtime
                 {
                     Read(); Read();
                     SkipWhitespace();
-                    var right = ParseAdditive();
+                    IFormulaNode right = ParseAdditive();
                     return new ComparisonNode(node, right, ComparisonNode.ComparisonOperator.LessThanOrEqual);
                 }
                 else
                 {
                     Read();
                     SkipWhitespace();
-                    var right = ParseAdditive();
+                    IFormulaNode right = ParseAdditive();
                     return new ComparisonNode(node, right, ComparisonNode.ComparisonOperator.LessThan);
                 }
             }
@@ -396,7 +485,7 @@ namespace FormulaKit.Runtime
 
         private IFormulaNode ParseAdditive()
         {
-            var node = ParseMultiplicative();
+            IFormulaNode node = ParseMultiplicative();
 
             SkipWhitespace();
             while (_position < _expression.Length && (Peek() == '+' || Peek() == '-'))
@@ -422,7 +511,7 @@ namespace FormulaKit.Runtime
 
         private IFormulaNode ParseMultiplicative()
         {
-            var node = ParseExponent();
+            IFormulaNode node = ParseExponent();
 
             SkipWhitespace();
             while (_position < _expression.Length && (Peek() == '*' || Peek() == '/' || Peek() == '%'))
@@ -453,15 +542,15 @@ namespace FormulaKit.Runtime
 
         private IFormulaNode ParseExponent()
         {
-            var node = ParseUnary();
+            IFormulaNode node = ParseUnary();
 
             SkipWhitespace();
             if (_position < _expression.Length && Peek() == '^')
             {
                 Read();
                 SkipWhitespace();
-                var right = ParseExponent(); // Right associative
-                node = new BinaryOpNode(node, right, Mathf.Pow);
+                IFormulaNode right = ParseExponent(); // Right associative
+                node = new BinaryOpNode(node, right, (a, b) => Mathf.Pow(a, b));
             }
 
             return node;
@@ -504,12 +593,10 @@ namespace FormulaKit.Runtime
             {
                 Read();
                 SkipWhitespace();
-                var node = ParseExpression();
+                IFormulaNode node = ParseExpression();
                 SkipWhitespace();
                 if (Peek() != ')')
-                {
                     throw new FormatException("Expected closing parenthesis");
-                }      
                 Read();
                 return node;
             }
@@ -523,7 +610,7 @@ namespace FormulaKit.Runtime
             // Functions and variables
             if (char.IsLetter(Peek()) || Peek() == '_')
             {
-                var identifier = ParseIdentifier();
+                string identifier = ParseIdentifier();
 
                 // Check for function call
                 SkipWhitespace();
@@ -610,11 +697,7 @@ namespace FormulaKit.Runtime
                 sb.Append(Read());
             }
 
-            if (!float.TryParse(sb.ToString(), out var result))
-            {
-                throw new FormatException($"Invalid number format: {sb}");
-            }
-            return result;  
+            return float.Parse(sb.ToString());
         }
 
         private string ParseIdentifier()
@@ -628,43 +711,14 @@ namespace FormulaKit.Runtime
 
             return sb.ToString();
         }
-        
+
+        // ============== UTILITY METHODS ==============
+
         private static bool TryGetUnaryFunction(string id, out Func<float, float> func)
-        {
-            switch (id)
-            {
-                case "sqrt": func = Mathf.Sqrt; return true;
-                case "abs": func = Mathf.Abs; return true;  
-                case "floor": func = Mathf.Floor; return true;
-                case "ceil": func = Mathf.Ceil; return true;
-                case "round": func = Mathf.Round; return true;
-                case "sin": func = Mathf.Sin; return true;
-                case "cos": func = Mathf.Cos; return true;
-                case "tan": func = Mathf.Tan; return true;
-                case "log": func = Mathf.Log; return true;
-                case "exp": func = Mathf.Exp; return true;
-                case "clamp01": func = Mathf.Clamp01; return true;
-                case "sign": func = Mathf.Sign; return true;
-                case "negative": func = x => -x; return true;
-                case "acos": func = Mathf.Acos; return true;
-                case "asin": func = Mathf.Asin; return true;
-                case "atan": func = Mathf.Atan; return true;
-                default: func = null; return false; 
-            }
-        }
-        
+            => FormulaFunctions.TryGetUnary(id, out func);
+
         private static bool TryGetMultiFunction(string id, out Func<float[], float> func)
-        {
-            switch(id)
-            {
-                case "min": func = args => args.Length >= 2 ? Mathf.Min(args[0], args[1]) : args[0]; return true;
-                case "max": func = args => args.Length >= 2 ? Mathf.Max(args[0], args[1]) : args[0]; return true;
-                case "clamp": func = args => args.Length >= 3 ? Mathf.Clamp(args[0], args[1], args[2]) : args[0]; return true;
-                case "lerp": func = args => args.Length >= 3 ? Mathf.Lerp(args[0], args[1], args[2]) : args[0]; return true;
-                case "pow": func = args => args.Length >= 2 ? Mathf.Pow(args[0], args[1]) : args[0]; return true;
-                default: func = null; return false; 
-            }
-        }
+            => FormulaFunctions.TryGetMulti(id, out func);
         
         private string PeekWord()
         {
@@ -717,13 +771,21 @@ namespace FormulaKit.Runtime
             messageBuilder.Append("\nExpression:\n");
             messageBuilder.Append(_expression);
 
-            Debug.LogError($"[FormulaParser] {messageBuilder}");
+            if (!_suppressLogging)
+            {
+                Debug.LogError($"[FormulaParser] {messageBuilder}");
+            }
 
             return new FormatException(messageBuilder.ToString(), ex);
         }
 
         private void LogUnexpectedParserException(Exception ex)
         {
+            if (_suppressLogging)
+            {
+                return;
+            }
+
             var context = BuildErrorContext();
             var messageBuilder = new StringBuilder();
             messageBuilder.Append($"Unexpected error at line {context.line}, column {context.column}: {ex.Message}");
@@ -749,10 +811,10 @@ namespace FormulaKit.Runtime
                 return (1, 1, string.Empty, "^");
             }
 
-            var position = GetErrorPosition();
+            int position = GetErrorPosition();
             var (line, column) = GetLineAndColumn(position);
-            var lineText = GetLineText(position);
-            var pointer = BuildPointer(column, lineText.Length);
+            string lineText = GetLineText(position);
+            string pointer = BuildPointer(column, lineText.Length);
 
             return (line, column, lineText, pointer);
         }
@@ -764,16 +826,16 @@ namespace FormulaKit.Runtime
                 return 0;
             }
 
-            var maxIndex = Math.Max(0, _expression.Length - 1);
-            var clamped = Math.Max(0, Math.Min(_position, maxIndex));
+            int maxIndex = Math.Max(0, _expression.Length - 1);
+            int clamped = Math.Max(0, Math.Min(_position, maxIndex));
 
             return clamped;
         }
 
         private (int line, int column) GetLineAndColumn(int position)
         {
-            var line = 1;
-            var column = 1;
+            int line = 1;
+            int column = 1;
 
             for (int i = 0; i < position && i < _expression.Length; i++)
             {
@@ -799,7 +861,7 @@ namespace FormulaKit.Runtime
                 return string.Empty;
             }
 
-            var start = position;
+            int start = position;
             while (start > 0)
             {
                 char previous = _expression[start - 1];
@@ -811,7 +873,7 @@ namespace FormulaKit.Runtime
                 start--;
             }
 
-            var end = position;
+            int end = position;
             while (end < _expression.Length)
             {
                 char current = _expression[end];
@@ -828,8 +890,8 @@ namespace FormulaKit.Runtime
 
         private string BuildPointer(int column, int lineLength)
         {
-            var maxColumn = lineLength > 0 ? lineLength + 1 : 1;
-            var safeColumn = Math.Max(1, Math.Min(column, maxColumn));
+            int maxColumn = lineLength > 0 ? lineLength + 1 : 1;
+            int safeColumn = Math.Max(1, Math.Min(column, maxColumn));
             return new string(' ', safeColumn - 1) + '^';
         }
 

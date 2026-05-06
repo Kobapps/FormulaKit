@@ -1,0 +1,153 @@
+.formula-code-editor {
+    flex-direction: row;
+    background-color: var(--la-bg-canvas);
+    border-color: var(--la-border);
+    border-width: 1px;
+    border-top-left-radius: var(--la-radius-lg);
+    border-top-right-radius: var(--la-radius-lg);
+    border-bottom-left-radius: var(--la-radius-lg);
+    border-bottom-right-radius: var(--la-radius-lg);
+    min-height: 96px;
+    padding-top: var(--la-pad-tight);
+    padding-bottom: var(--la-pad-tight);
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.formula-code-editor__gutter {
+    width: 36px;
+    background-color: var(--la-bg);
+    padding-top: var(--la-pad-tight);
+    padding-bottom: var(--la-pad-tight);
+    padding-left: 0;
+    padding-right: var(--la-pad-tight);
+    flex-direction: column;
+    flex-shrink: 0;
+    border-right-color: var(--la-divider);
+    border-right-width: 1px;
+}
+
+.formula-code-editor__gutter-line {
+    -unity-text-align: middle-right;
+    color: var(--la-text-subtle);
+    font-size: 12px;
+    height: 16px;
+}
+
+.formula-code-editor__input-area {
+    position: relative;
+    flex-grow: 1;
+}
+
+.formula-code-editor__input {
+    flex-grow: 1;
+    margin: 0;
+}
+
+.formula-code-editor__input > .unity-text-field__input {
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    padding-top: var(--la-pad-tight);
+    padding-bottom: var(--la-pad-tight);
+    padding-left: var(--la-pad-base);
+    padding-right: var(--la-pad-base);
+    margin: 0;
+    -unity-text-align: upper-left;
+    -unity-paragraph-spacing: 0;
+    font-size: 12px;
+    --unity-cursor-color: var(--la-text);
+    --unity-selection-color: var(--la-accent-bg);
+    white-space: normal;
+}
+
+.formula-code-editor__input > .unity-text-field__input:hover {
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.formula-code-editor__input > .unity-text-field__input:focus {
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+}
+
+.formula-code-editor--readonly .formula-code-editor__input > .unity-text-field__input {
+    --unity-cursor-color: rgba(0, 0, 0, 0);
+}
+
+.formula-code-editor__highlight {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    padding-top: var(--la-pad-tight);
+    padding-bottom: var(--la-pad-tight);
+    padding-left: var(--la-pad-base);
+    padding-right: var(--la-pad-base);
+    margin: 0;
+    color: var(--la-text);
+    -unity-text-align: upper-left;
+    -unity-paragraph-spacing: 0;
+    font-size: 12px;
+    white-space: normal;
+}
+
+.formula-code-editor__diagnostics {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.formula-code-editor__diagnostic-row {
+    position: absolute;
+    left: 0;
+    right: 0;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: var(--la-pad-base);
+}
+
+.formula-code-editor__diagnostic-caret {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    -unity-text-align: middle-left;
+    font-size: 12px;
+    -unity-font-style: bold;
+    margin: 0;
+    padding: 0;
+}
+
+.formula-code-editor__diagnostic-caret--error {
+    color: rgb(255, 90, 90);
+}
+
+.formula-code-editor__diagnostic-caret--warning {
+    color: rgb(255, 200, 60);
+}
+
+.formula-code-editor__diagnostic-row--error {
+    background-color: rgba(255, 80, 80, 0.08);
+}
+
+.formula-code-editor__diagnostic-row--warning {
+    background-color: rgba(255, 200, 60, 0.08);
+}
+
+.formula-code-editor__diagnostic-label {
+    font-size: 11px;
+    -unity-font-style: italic;
+    color: var(--la-text-muted);
+    margin: 0;
+    padding: 0;
+}
+
+.formula-code-editor__diagnostic-row--error > .formula-code-editor__diagnostic-label {
+    color: rgb(255, 120, 120);
+}
+
+.formula-code-editor__diagnostic-row--warning > .formula-code-editor__diagnostic-label {
+    color: rgb(255, 200, 60);
+}

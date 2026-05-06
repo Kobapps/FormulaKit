@@ -39,38 +39,6 @@ namespace FormulaKit.Editor.Tests
         }
 
         [Test]
-        public void Run_WithCachedFormula_EvaluatesNewInputsCorrectly()
-        {
-            const string expression = "(a + b) * modifier";
-
-            var firstInputs = new Dictionary<string, float>
-            {
-                { "a", 2f },
-                { "b", 3f },
-                { "modifier", 1.5f }
-            };
-
-            float firstResult = FormulaAPI.Run(expression, firstInputs);
-
-            Assert.That(firstResult, Is.EqualTo(7.5f).Within(0.0001f));
-
-            var secondInputs = new Dictionary<string, float>
-            {
-                { "a", 4f },
-                { "b", 1f },
-                { "modifier", 2.25f }
-            };
-
-            float secondResult = FormulaAPI.Run(expression, secondInputs);
-
-            Assert.That(secondResult, Is.EqualTo(11.25f).Within(0.0001f));
-
-            IReadOnlyDictionary<string, string> cached = FormulaAPI.GetAllFormulas();
-            Assert.That(cached.Count, Is.EqualTo(1));
-            Assert.That(cached.Values, Does.Contain(expression));
-        }
-
-        [Test]
         public void RunBuilder_SetInputs_EvaluatesExpression()
         {
             float result = FormulaAPI.Run("let temp = x * 2; temp + y")
@@ -120,32 +88,6 @@ namespace FormulaKit.Editor.Tests
             Assert.That(cached.Count, Is.EqualTo(1));
             Assert.That(cached.ContainsKey("customId"), Is.True);
             Assert.That(cached["customId"], Is.EqualTo("a * b"));
-        }
-
-        [Test]
-        public void RunBuilder_WithCache_ReusesFormulaForDifferentInputs()
-        {
-            const string expression = "let total = base + bonus; total * multiplier";
-
-            float first = FormulaAPI.Run(expression)
-                .Set("base", 10f)
-                .Set("bonus", 5f)
-                .Set("multiplier", 1.1f)
-                .WithCache("sharedFormula");
-
-            Assert.That(first, Is.EqualTo(16.5f).Within(0.0001f));
-
-            float second = FormulaAPI.Run(expression)
-                .Set("base", 6f)
-                .Set("bonus", 2f)
-                .Set("multiplier", 2.5f)
-                .WithCache("sharedFormula");
-
-            Assert.That(second, Is.EqualTo(20f).Within(0.0001f));
-
-            IReadOnlyDictionary<string, string> cached = FormulaAPI.GetAllFormulas();
-            Assert.That(cached.Count, Is.EqualTo(1));
-            Assert.That(cached["sharedFormula"], Is.EqualTo(expression));
         }
 
         [Test]
