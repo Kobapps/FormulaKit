@@ -7,6 +7,8 @@ Formula Kit is a Unity package for defining, validating, and evaluating arbitrar
 - **Formula Builder window** — UI Toolkit editor with syntax highlighting, snapshot-based undo, live input auto-detection, inline parse-error markers, and one-click evaluation.
 - **Formula Reference window** — searchable, categorized reference for every supported expression with inline runnable examples.
 
+<img width="705" height="758" alt="image" src="https://github.com/user-attachments/assets/4a557065-d11d-4558-a79a-b31b60e52d5a" />
+
 ## Table of Contents
 
 - [Installation](#installation)
