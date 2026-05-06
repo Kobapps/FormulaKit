@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using FormulaKit;
-using FormulaKit.Runtime;
 
-namespace FormulaFramework
+namespace FormulaKit.Runtime
 {
     /// <summary>
     /// Pure C# JSON loader for formulas

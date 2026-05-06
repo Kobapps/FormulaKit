@@ -1,0 +1,45 @@
+/*
+ * Kobapps Editor Tool — Design Tokens
+ * Consumed by every Kobapps editor window. Widgets read tokens via var(--la-*);
+ * never hard-code colours / radii / padding in widget USS.
+ */
+
+:root {
+    /* Surfaces */
+    --la-bg:           #1e1e22;
+    --la-bg-alt:       #25252b;
+    --la-bg-panel:     #2a2a30;
+    --la-bg-elevated:  #33333c;
+    --la-bg-canvas:    #141418;
+
+    /* Borders + dividers */
+    --la-border:        #3a3a42;
+    --la-border-strong: #4a4a52;
+    --la-divider:       #2d2d34;
+
+    /* Text */
+    --la-text:        #e5e5e8;
+    --la-text-muted:  #9a9aa0;
+    --la-text-subtle: #6e6e76;
+
+    /* Accent (single hue, three weights) */
+    --la-accent:     #4a9eff;
+    --la-accent-dim: #3a7fcc;
+    --la-accent-bg:  #2a3f5a;
+
+    /* Row states */
+    --la-row-hover:    #33333c;
+    --la-row-selected: #2a3f5a;
+
+    /* Radii */
+    --la-radius-sm: 4px;
+    --la-radius-md: 6px;
+    --la-radius-lg: 8px;
+    --la-radius-xl: 12px;
+
+    /* Padding */
+    --la-pad-tight:   4px;
+    --la-pad-base:    8px;
+    --la-pad-loose:  12px;
+    --la-pad-section: 14px;
+}

@@ -1,6 +1,6 @@
 {
   "name": "com.barnaff.formulakit",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "displayName": "Formula Kit",
   "description": "Runtime formula authoring and evaluation utilities with editor tooling for Unity projects.",
   "unity": "6000.1",

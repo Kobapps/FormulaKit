@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace FormulaFramework
+namespace FormulaKit.Runtime
 {
     /// <summary>
     /// Random number provider for formulas
