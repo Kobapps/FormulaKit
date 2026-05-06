@@ -2,15 +2,26 @@
   "name": "com.kobapps.formulakit",
   "version": "1.2.1",
   "displayName": "Formula Kit",
-  "description": "Runtime formula authoring and evaluation utilities with editor tooling for Unity projects.",
+  "description": "Author readable text formulas (arithmetic, conditionals, let-bindings, return, built-in math/random helpers) and evaluate them at runtime. Includes a UI Toolkit Formula Builder for live authoring with syntax highlighting, undo, and inline error markers, and a Formula Reference window documenting every supported expression.",
   "unity": "6000.1",
+  "license": "MIT",
+  "documentationUrl": "https://github.com/Kobapps/FormulaKit/blob/main/README.md",
+  "changelogUrl": "https://github.com/Kobapps/FormulaKit/blob/main/CHANGELOG.md",
+  "licensesUrl": "https://github.com/Kobapps/FormulaKit/blob/main/LICENSE.md",
   "author": {
-    "name": "FormulaKit Contributors"
+    "name": "Kobapps",
+    "url": "https://kobapps.com/"
   },
   "keywords": [
     "formula",
+    "expression",
     "math",
-    "expressions"
+    "parser",
+    "evaluator",
+    "scripting",
+    "ui-toolkit",
+    "editor-tool",
+    "designer-friendly"
   ],
   "dependencies": {},
   "testables": [
